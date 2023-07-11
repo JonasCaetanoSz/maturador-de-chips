@@ -1,51 +1,93 @@
 
-# maturador de chips
+# Maturador de chips
 
 maturador de chips é um pequeno programa para "esquentar" contas do whatssap e dessa forma, evitar banimento da rede social.
 
+
 ## Instalação
 
-clone o repositorio:  
+Se você é usuário do Windows basta seguir as instruções abaixo para executar o código-fonte.
 
-```bash
+- Clone o repositório
+
+```shell
 git clone https://github.com/JonasCaetanoSz/maturador-de-chips.git
+
 ```
 
-inicia e instala as dependecias em um ambiente virtual:
+Crie um ambiente virtual e ative-o
 
-    
-```bash
-python -m venv maturador-de-chips && cd maturador-de-chips/scripts && activate && cd.. pip install -r requirements.txt 
+```shell
+python -m venv .venv 
 ```
 
-inicie o programa:
+```shell
+& .venv/scripts/activate.ps1
+```
 
-```bash
+- Instale as dependências
+
+
+```shell
+pip install -r requirements.txt
+```
+
+- Inicie o programa
+
+
+```shell
 python main.py
 ```
+
 ## Funcionalidades
 
-- Temas dark e light
-- Log de mensagens enviadas detalhado
-- Cache de sessão das contas adicionadas
-- Pode definir máximo de mensagens
-- Pode definir intervalo entre mensagens
-
+- Definir intervalo mínimo e máximo entre mensagens
+- Definir troca de conta após X mensagens
+- Definir máximo de mensagens
+- Parar em caso de bloqueio
+- Suporte até 10 contas
 
 ## Roadmap
 
-- Melhorar o suporte de navegadores (tkinter webviewer)
 
-- Adicionar opção de envio de imagens e audios
+- Permitir ao usuário escolher o nome da instância
+- Adicionar envio de arquivos
+- Remover o limite de contas
 
 ## FAQ
 
-#### o programa está indentificando mais contas do que foi adicionado:
 
-a causa mais comum para este erro é um arquivo `.gikeep` na pasta `/utils/sessions` , nesta pasta está armazenado a sessão de todas as contas adicionadas, se você acessar essa pasta e ver um arquivo .gitkeep ou qualquer arquivos/pastas com nomes que não são iqual ao apelido de alguma conta adicionada, você pode deletar.
+### Quais são as portas usadas por este programa?
+
+
+A porta 5025 é usada pela API e a porta 5026 é usada pelo websocket.
+
+
+### Como apagar uma conta?
+
+
+Como ainda não é possível escolher o nome da instância, não achei necessário ter a opção de apagar uma conta. Portanto, se você deseja trocar uma conta, pode simplesmente desconectá-la pelo próprio WhatsApp e reiniciar o programa.
+
+
+### Quais são os requisitos mínimos do sistema?
+
+
+desenvolvi em uma maquina com processador i3 e 4GB de memoria RAM, portanto, se sua maquina possui configurações semelhantes ou superiores a essas, o maturador rodará sem problemas.
+
+
+### Como gerar meu próprio executável?
+
+
+Este é o comando pyinstaller para gerar o executável do servidor websocket:
+
+
+```shell
+pyinstaller --noconfirm --onefile --windowed  "<PATH-DO-ARQUIVO-WEBSOCKET_SERVER.PY>"
+```
 
 
 ## Licença
 
-distribuido sobre á licença [MIT](https://choosealicense.com/licenses/mit/)
+
+ditribuido sobre [MIT](https://choosealicense.com/licenses/mit/) Licença
 

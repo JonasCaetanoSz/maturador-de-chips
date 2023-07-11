@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Log de Eventos</title>
+  <link rel="stylesheet" href="assets/css/stackpath.bootstrapcdn.com_bootstrap_4.5.2_css_bootstrap.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+
+    .container {
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .log-table-container {
+      max-height: 400px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .log-table-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .log-table-container::-webkit-scrollbar-thumb {
+      background-color: #888;
+      border-radius: 4px;
+    }
+
+    .log-table-container::-webkit-scrollbar-thumb:hover {
+      background-color: #555;
+    }
+
+    .log-table-container table {
+      margin-bottom: 0;
+    }
+
+    .table {
+      background-color: #fff;
+      border-collapse: unset;
+    }
+
+    .table thead th {
+      background-color: #007bff;
+      color: #fff;
+      border-color: #007bff;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .table tbody td {
+      text-align: center;
+      max-width: 72px;
+    }
+
+    #stopButton {
+      display: block;
+      margin: 0 auto;
+      margin-top: 30px;
+      width: 150px;
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 0;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .messageInput {
+      text-align: center;
+      margin: 20px;
+    }
+
+    .messageTd {
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Enviado de</th>
+          <th>Recebido por</th>
+          <th>Mensagem</th>
+          <th>Horário</th>
+        </tr>
+      </thead>
+    </table>
+
+
+    <div class="log-table-container">
+
+      <table class="table">
+        <tbody id="logTableBody">
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-danger" id="stopButton">Parar</button>
+  </div>
+
+  <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
+  <script src="assets/js/stackpath.bootstrapcdn.com_bootstrap_4.5.2_js_bootstrap.min.js"></script>
+  <script src="assets/js/notify.js"></script>
+  <script src="assets/js/updates.js"></script>
+</body>
+</html>

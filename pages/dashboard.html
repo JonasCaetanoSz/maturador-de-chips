@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="assets/css/stackpath.bootstrapcdn.com_bootstrap_4.5.2_css_bootstrap.min.css">
+  <style>
+    body {
+      background-color: #e3eccd;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    
+    .container {
+      margin-top: 50px;
+    }
+    
+    .bg-whatsapp {
+      background-color: #128C7E;
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    
+    .form-heading {
+      color: #fff;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .custom-control-label {
+      color: #fff;
+      font-weight: bold;
+    }
+    
+    .input-group-prepend,
+    .input-group-append {
+      height: 38px;
+    }
+    
+    .input-group-text {
+      background-color: #e5e5e5;
+    }
+    
+    .list-group {
+      margin-bottom: 20px;
+    }
+    
+    .list-group-item {
+      background-color: #fff;
+      border-color: #128C7E;
+      color: #128C7E;
+      font-weight: bold;
+    }
+    
+    .btn-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    
+    .btn-whatsapp {
+      background-color: #128C7E;
+      border-color: #128C7E;
+      color: #fff;
+      font-weight: bold;
+      width: 48%;
+    }
+    
+    
+    .info-section {
+      background-color: #128C7E;
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    
+    .info-section p {
+      margin-bottom: 0;
+    }
+    
+    .links-section {
+      background-color: #128C7E;
+      color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    
+    .links-section a {
+      color: #fff;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    
+    @media (max-width: 700px) {
+      .form-heading {
+        font-size: 20px;
+      }
+      
+      .btn-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn-container .btn {
+        margin-top: 10px;
+        width: 100%;
+      }
+      
+      .accounts-list {
+        margin-top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="bg-whatsapp">
+          <h3 class="form-heading">configurações</h3>
+          
+          <div class="form-group">
+            <div class="custom-control custom-checkbox mb-3">
+              <input type="checkbox" class="custom-control-input" id="banimentoCheckbox" {{continue_with_block}}>
+              <label class="custom-control-label" for="banimentoCheckbox">Continuar em caso de banimento</label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="intervaloInput">Intervalo entre mensagens:</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="intervaloMinInput" placeholder="Min" min="1" max="1000">
+              <div class="input-group-prepend">
+                <span class="input-group-text">-</span>
+              </div>
+              <input type="number" class="form-control" id="intervaloMaxInput" placeholder="Max" min="1" max="2000">
+              <div class="input-group-append">
+                <span class="input-group-text">segundos</span>
+              </div>
+            </div>
+          </div>
+                    
+          
+          <div class="form-group">
+            <label for="trocarContaInput">Trocar de conta a cada:</label>
+            <div class="input-group mb-3">
+              <input type="number" class="form-control" id="trocarContaInput"  min="1">
+              <div class="input-group-append">
+                <span class="input-group-text">mensagens</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="pararAposInput">Parar após:</label>
+            <div class="input-group mb-3">
+              <input type="number" class="form-control" id="pararAposInput"  min="1"> 
+              <div class="input-group-append">
+                <span class="input-group-text">mensagens</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="arquivoInput">Selecionar arquivo de mensagens:</label>
+            <div class="input-group mb-3">
+              <div class="custom-file">
+                <input type="file" class="custom-file-input" id="arquivoInput" accept=".txt">
+                <label class="custom-file-label" for="arquivoInput" id="arquivoInputLabel">{{selected_file}}</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="btn-container">
+            <button type="button" class="btn btn-whatsapp">Ver contas conectadas</button>
+            <button type="button" class="btn btn-whatsapp">Iniciar maturador</button>
+          </div>
+        </div>
+        
+        <div class="links-section">
+          <a href="#" id="VersionView">Versão</a>
+          <a href="#" id="GithubOpen">Link do GitHub</a>
+          <a href="#" id="LicenseOpen">Licença de Código</a>
+          <a href="#" id="PixOpen">Apoiar projeto</a>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="bg-whatsapp accounts-list">
+          <h4 class="form-heading">números conectados</h4>
+          <ul class="list-group" id="numerosConectados">
+            {% for phone in phones %}
+            <li class="list-group-item">{{ phone.replace('+', '') }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
+  <script src="assets/js/stackpath.bootstrapcdn.com_bootstrap_4.5.2_js_bootstrap.min.js"></script>
+  <script src="assets/js/cdn.jsdelivr.net_npm_@popperjs_core@2.5.4_dist_umd_popper.min.js"></script>
+  <script src="assets/js/notify.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+  
+
+  <script>
+    
+    // carregar as configurações do usuario
+
+    //document.querySelector("#banimentoCheckbox").checked = "{{stop_with_block}}" == "True" ? true : false # é melhor deixar como varivel pro jinja tratar, porque sempre que a pagina atualiza esse checkbox fica horrivel
+    document.querySelector("#intervaloMinInput").value = "{{min_message_interval}}"
+    document.querySelector("#intervaloMaxInput").value = "{{max_message_interval}}"
+    document.querySelector("#trocarContaInput").value = "{{change_account_after_messages}}"
+    document.querySelector("#pararAposInput").value = "{{stop_after_messages}}"
+
+
+  </script>
+</body>
+</html>

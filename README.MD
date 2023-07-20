@@ -89,5 +89,4 @@ pyinstaller --noconfirm --onefile --windowed  "<PATH-DO-ARQUIVO-WEBSOCKET_SERVER
 ## Licença
 
 
-ditribuido sobre [MIT](https://choosealicense.com/licenses/mit/) Licença
-
+distribuído sobre [MIT](https://choosealicense.com/licenses/mit/) Licenças

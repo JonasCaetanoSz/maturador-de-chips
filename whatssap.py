@@ -23,7 +23,7 @@ class Whatssap(QThread):
         self.rundding = False
         self.configs = self.load_configs()
 
-        # variaveis que ajuda a gerenciar a maturação
+        # variáveis que ajuda a gerenciar a maturação
 
         self.messages_send_count = 0
         self.last_number_sender = None
@@ -34,7 +34,7 @@ class Whatssap(QThread):
     def start(self) -> None:
     
         if len(self.phones) < 2:
-            messagebox.showerror(title="Maturador de chips", message="número de contas insufiente para iniciar a maturação. duas contas ou mais são necessesarias.")
+            messagebox.showerror(title="Maturador de chips", message="número de contas insuficiente para iniciar a maturação. duas contas ou mais são necessárias.")
             return
         
         if not self.messages:
@@ -43,7 +43,7 @@ class Whatssap(QThread):
         
         # fechar a pagina de contas
         self.signals.close_accounts_page.emit()
-        # tranfere o webview principal para a tela de logs e configura a tela
+        # transfere o webview principal para a tela de logs e configura a tela
         
         self.start_websocket_server()
         self.window.webview.load(QUrl("http://127.0.0.1:5025/maturation-updates"))
@@ -65,7 +65,7 @@ class Whatssap(QThread):
                 
                 self.last_number_sender = new_sender
                 self.account_sender = self.webviews[new_sender]
-                self.messages_send_count = 0 # reseta a variavel
+                self.messages_send_count = 0 # reset na variável
             
             # escolher a conta que vai receber mensagem
 
@@ -76,26 +76,25 @@ class Whatssap(QThread):
             # escolher a mensagem que vai ser enviada
 
             message = self.messages[random.randint(0,  (len(self.messages) -1) )]
-            
-            # trata o numero de telefone para que possa ser usado em wa.me
+            receive_phone_number = self.phones[receive_phone_index]
+            sender_phone_number = self.phones[self.last_number_sender]
 
-            receive_phone = self.phones_parser(self.phones[receive_phone_index])
 
-            if self.check_block(self.phones[self.last_number_sender]):
+            if self.check_block(sender_phone_number):
                 return
-            # tudo certo enviar a mensagem e aguardar o intervalo escolhido pelo usuario
-            self.open_chat(phone=receive_phone)
+            # tudo certo enviar a mensagem e aguardar o intervalo escolhido pelo usuário
+            self.open_chat(phone=receive_phone_number)
             self.send_message(message=message)
             self.close_chat()
-            try: asyncio.run(self.send_websocket_message(sender=self.phones_parser(self.phones[self.last_number_sender]), receiver=receive_phone, message=message))
+            try: asyncio.run(self.send_websocket_message(sender=sender_phone_number, receiver=receive_phone_number, message=message))
             except: pass
             self.messages_send_count += 1
             interval = random.randint(int(self.configs["min_message_interval"]), int(self.configs["max_message_interval"]))
             time.sleep(interval)
                     
-        # maturação concluida
+        # maturação concluída
 
-        messagebox.showinfo(title="Maturador de chips", message="maturação concluida com sucesso!")
+        messagebox.showinfo(title="Maturador de chips", message="maturação concluída com sucesso!")
         self.signals.stop_maturation.emit()
 
     # parar maturação e voltar pro dashboard
@@ -131,7 +130,7 @@ class Whatssap(QThread):
     def start_websocket_server(self):
         subprocess.Popen(executable="websocket_server.exe", args=[])
 
-    # carrega as configurações do usuario
+    # carrega as configurações do usuário
 
     def load_configs(self) -> dict:
         with open(file="state.json", mode="r", encoding="utf-8") as f:
@@ -166,15 +165,6 @@ class Whatssap(QThread):
             self.block = False
 
         return False
-    
-    # tratar numeros de telefone
-
-    def phones_parser(self, phone) -> str:
-        phone = phone.replace("+", "")
-        phone = phone.replace("-", "")
-        phone = phone.replace(" ", "")
-        return phone
-
     
     # executar o script que abre o chat da conversa
 

@@ -24,7 +24,7 @@ class Api:
             static_url_path="/assets"
             )
         
-    # setar a varavel "pagina de contas aberta" como verdadeiro ou falso
+    # setar a variável "accounts_page_is_open" como verdadeiro ou falso
     
     def set_account_page_state(self, op:bool, instance = None):
         self.accounts_page_instance = instance
@@ -78,14 +78,14 @@ class Api:
             )
             return flask.jsonify(ok=True)
         
-        # abrir o link do repositorio do projeto no github
+        # abrir o link do repositório do projeto no github
 
         @self.app.route(rule="/api/github-open")
         def open_github_repository():
             webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips")
             return flask.jsonify(ok=True)
         
-        # abrir o link da licensa do codigo
+        # abrir o link da licença do código
 
         @self.app.route(rule="/api/license-open")
         def open_license_repository():

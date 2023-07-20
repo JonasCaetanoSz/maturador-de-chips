@@ -9,29 +9,22 @@ function SendPhoneNumber(phone) {
   xhr.send()
 }
 
-// verifica a cada 0 milisegundos se um conta foi adiconada, se sim, e clica no painel de novas conversas
-// e busca na lista de contatos o numero da conta atual, em seguida fecha a lista de contatos
+// verifica a cada 0 milisegundos se um conta foi adiconada, se sim, encontra o nmero de telefone da conta atual no aramazenamento local
 
 function verificarConexaoWhatsApp() {
-  let newChat = document.querySelector('[aria-label="Nova conversa"]');
-  if (newChat) {
-    newChat.click();
+  let ElementReference = document.getElementById("pane-side");
+  if (ElementReference) {
 
-    setTimeout(() => {
-      let closeNewChat = document.querySelector('[data-testid="btn-closer-drawer"]');
-      if (closeNewChat) {
-        setTimeout(() => {
-          let MyPhone = document.querySelector('[data-testid="message-yourself-row"]').textContent.split(")")[0].split("(")[0];
-          SendPhoneNumber(MyPhone)
-          closeNewChat.click();
-        }, 0);
-      }
-    }, 0);
+    let accountPhone = localStorage.getItem("last-wid-md");
+    let accountPhoneProcessed = accountPhone.split(":")[0].replace('"', "");
+    SendPhoneNumber(accountPhoneProcessed);
 
   } else {
+
     setTimeout(() => {
       verificarConexaoWhatsApp();
     }, 0);
+    
   }
 }
 

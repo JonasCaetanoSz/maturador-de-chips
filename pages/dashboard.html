@@ -212,9 +212,9 @@
 
   <script>
     
-    // carregar as configurações do usuario
+    // carregar as configurações do usuário
 
-    //document.querySelector("#banimentoCheckbox").checked = "{{stop_with_block}}" == "True" ? true : false # é melhor deixar como varivel pro jinja tratar, porque sempre que a pagina atualiza esse checkbox fica horrivel
+    //document.querySelector("#banimentoCheckbox").checked = "{{stop_with_block}}" == "True" ? true : false # é melhor deixar o jinja tratar, porque sempre que a pagina atualiza esse checkbox fica horrível
     document.querySelector("#intervaloMinInput").value = "{{min_message_interval}}"
     document.querySelector("#intervaloMaxInput").value = "{{max_message_interval}}"
     document.querySelector("#trocarContaInput").value = "{{change_account_after_messages}}"

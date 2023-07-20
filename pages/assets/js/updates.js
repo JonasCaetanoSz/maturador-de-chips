@@ -28,7 +28,7 @@
         newRow.append(cols);
         $("#logTableBody").append(newRow);
 
-        // faz o scroll automatico na tabela de logs
+        // faz o scroll automático na tabela de logs
 
         var logTableContainer = document.getElementsByClassName("log-table-container")[0];
         logTableContainer.scrollTop = logTableContainer.scrollHeight;
@@ -37,14 +37,14 @@
       // por algum motivo a conexão websocket não foi realizada (o motivo principal é que ele ainda esta iniciando)
 
       socket.onerror = function (error) {
-        //$.notify("erro ao me conectar no servidor webscoket", "error");
+        //$.notify("erro ao me conectar no servidor websocket", "error");
         ConnectWebSocketServer()
       };
 
-      // conexao com o servidor foi fechada
+      // conexão com o servidor foi fechada
 
       socket.onclose = function () {
-        $.notify("a conexão com o servidor websocket foi fechada, agora não é mais possivel atualizar o log.", "error");
+        $.notify("a conexão com o servidor websocket foi fechada, agora não é mais possível atualizar o log.", "error");
       };
     }
 

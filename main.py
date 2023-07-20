@@ -38,7 +38,7 @@ def start_maturation(window, messages_file, phones,signals):
 
 # iniciar a aplicação
 
-VERSION = "30.06.2023"
+VERSION = "19.07.2023"
 
 if __name__ == "__main__":
 

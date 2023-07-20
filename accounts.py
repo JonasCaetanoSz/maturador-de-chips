@@ -17,7 +17,7 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info):
         
         # novo numero adicionado
-
+        
         if "/maturador/api/account-added" in info.requestUrl().path():
             url_path = info.requestUrl().path()
             json_string = url_path[url_path.find("{"):url_path.find("}") + 1]
@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
             self.webviews.append(webview)
             webview.page().loadFinished.connect(lambda ok: self.run_scripts(ok))
     
-    # injeta script  login.js
+    # injeta script login.js
 
     def run_scripts(self, ok):
 

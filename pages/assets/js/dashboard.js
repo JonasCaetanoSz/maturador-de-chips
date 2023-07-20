@@ -35,7 +35,7 @@ arquivoInput.addEventListener("change", async function () {
   arquivoInput.value = "";
 });
 
-// processa o pedido para atualizar as confgurações
+// processa o pedido para atualizar as configurações
 
 function update_config_send() {
     const stopWithBlock = document.querySelector("#banimentoCheckbox").checked ? "True" : "False";
@@ -56,6 +56,7 @@ function update_config_send() {
       || Number(maxMessageInterval) < 0
       || Number(changeAccountAfterMessages) < 0
       || Number(stopAfterMessages) < 0
+      || Number(maxMessageInterval) <= Number(minMessageInterval)
       ) {
       
       $.notify("verifique os dados informados", "error");
@@ -105,24 +106,22 @@ function update_config_send() {
   document.querySelector("#pararAposInput").addEventListener("change", update_config_send);  
 
 
-  // abrir repotorio do projeto
+  // abrir repositório do projeto
 
-  document.getElementById("GithubOpen").addEventListener("click", function request_gihub_open(){
+  document.getElementById("GithubOpen").addEventListener("click", function request_github_open(){
 
     let xhr = new XMLHttpRequest()
     xhr.open("GET", "/api/github-open", true)
     xhr.send()
-    console.log(xhr.response)
   })
 
-  // abrir a licensa de codigo do projeto
+  // abrir a licença de código do projeto
 
   document.getElementById("LicenseOpen").addEventListener("click", function request_license_open(){
 
       let xhr = new XMLHttpRequest()
       xhr.open("GET", "/api/license-open", true)
       xhr.send()
-      console.log(xhr.response)
     })
 
   // mostrar versão do projeto
@@ -132,7 +131,6 @@ function update_config_send() {
       let xhr = new XMLHttpRequest()
       xhr.open("GET", "/api/version-view", true)
       xhr.send()
-      console.log(xhr.response)
       })
   
   // mostrar a pagina do nubank de pix
@@ -142,7 +140,6 @@ function update_config_send() {
       let xhr = new XMLHttpRequest()
       xhr.open("GET", "/api/apoia-pix-open", true)
       xhr.send()
-      console.log(xhr.response)
       })
 
   // mostrar todas as contas conectadas
@@ -157,7 +154,6 @@ document.querySelectorAll(".btn-whatsapp").forEach(
         let xhr = new XMLHttpRequest()
         xhr.open("GET", "/api/accounts-view", true)
         xhr.send()
-        console.log(xhr.response)
         })
     }
   }
@@ -175,7 +171,6 @@ document.querySelectorAll(".btn-whatsapp").forEach(
         let xhr = new XMLHttpRequest()
         xhr.open("GET", "/api/start-maturation", true)
         xhr.send()
-        console.log(xhr.response)
         })
     }
   }

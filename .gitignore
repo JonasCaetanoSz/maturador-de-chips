@@ -1,0 +1,19 @@
+# pasta do ambiente virtual
+
+.venv/
+
+# as configurações do vs code
+
+.vscode/
+
+# sessões de todos os webviews
+
+sessions/
+
+# configurações dentro do programa
+
+state.json
+
+# bytecode python
+
+__pycache__/

@@ -163,7 +163,9 @@ class Whatssap(QThread):
             self.account_sender.page().runJavaScript(f""" $.notify("o numero {phone} foi desconectado", "error"); """)
             self.phones.pop(self.last_number_sender)
             self.block = False
-
+            self.account_sender = None
+            self.last_number_sender = None
+        
         return False
     
     # executar o script que abre o chat da conversa

@@ -79,9 +79,12 @@ class Whatssap(QThread):
             receive_phone_number = self.phones[receive_phone_index]
             sender_phone_number = self.phones[self.last_number_sender]
 
-
-            if self.check_block(sender_phone_number):
+            account_is_blocked = self.check_block(sender_phone_number)
+            if account_is_blocked == -1:
+                continue
+            elif account_is_blocked:
                 return
+            
             # tudo certo enviar a mensagem e aguardar o intervalo escolhido pelo usuário
             self.open_chat(phone=receive_phone_number)
             self.send_message(message=message)
@@ -143,7 +146,7 @@ class Whatssap(QThread):
     
     # checar se a conta que esta enviando mensagem foi bloqueada os desconectada
 
-    def check_block(self, phone:str) -> bool:
+    def check_block(self, phone:str) -> bool|int:
         with open(file="scripts/check_block.js", mode="r", encoding="utf8") as f:
             script = f.read()
         self.account_sender.page().runJavaScript(script.replace("@PHONE", phone)) 
@@ -165,6 +168,7 @@ class Whatssap(QThread):
             self.block = False
             self.account_sender = None
             self.last_number_sender = None
+            return -1
         
         return False
     

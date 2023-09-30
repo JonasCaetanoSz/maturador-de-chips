@@ -54,10 +54,8 @@ python main.py
 
 ## Roadmap
 
-
-- Permitir ao usuário escolher o nome da instância
 - Adicionar envio de arquivos
-- Remover o limite de contas
+- Adicionar disparador
 
 ## FAQ
 

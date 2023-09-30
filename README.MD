@@ -6,7 +6,7 @@ maturador de chips é um pequeno programa para "esquentar" contas do whatssap e 
 
 ## Instalação
 
-Se você é usuário  Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v12.08.2023/MaturadorSetup_12.08.2023.exe"> fazer download do instalador x64</a> ou siga as instruções abaixo para executar o código-fonte:
+Se você é usuário  Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/27.09.2023/MaturadorSetup_27.09.2023.exe"> fazer download do instalador x64</a> ou siga as instruções abaixo para executar o código-fonte:
 
 - Clone o repositório
 
@@ -45,7 +45,9 @@ python main.py
 - Definir troca de conta após X mensagens
 - Definir máximo de mensagens
 - Parar em caso de bloqueio
-- Suporte até 10 contas
+-   sem limite de instâncias
+-  escolher nome instância
+ - remover instância
 
 ## Roadmap
 

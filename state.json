@@ -1,7 +1,8 @@
 {
     "continue_with_block": "True",
-    "min_message_interval": "67",
-    "max_message_interval": "90",
-    "change_account_after_messages": "5",
-    "stop_after_messages": "10"
+    "min_message_interval": "10",
+    "max_message_interval": "20",
+    "change_account_after_messages": "1",
+    "stop_after_messages": "1",
+    "shutdown_computer": "False"
 }

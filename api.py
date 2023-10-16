@@ -1,16 +1,19 @@
+from PyQt5.QtCore import QThread
 from tkinter import messagebox
+from flask_cors import CORS
 import webbrowser
-import shutil
+import requests
 import flask
 import json
 import os
 
-class Api:
+class Api(QThread):
 
     def __init__(self, version, signals_receive):
+        super().__init__()
         self.PORT = 5025
         self.messages_base = {"content":[], "filename":"Selecionar arquivo"}
-        self.accounts_phone_list = ["Desconectado" for i in range(0,10)]
+        self.accounts_phone = {}
         self.accounts_page_instance = None
         self.accounts_page_is_open = False
         self.SIGNAL_RECEIVER = signals_receive
@@ -22,15 +25,17 @@ class Api:
             template_folder=self.TEMPLASTES_FOLDER,
             static_folder=self.ASSETS_FOLDER,
             static_url_path="/assets"
-            )
-        
+        )
+        CORS(self.app)
+        super().start()
+
     # setar a variável "accounts_page_is_open" como verdadeiro ou falso
     
     def set_account_page_state(self, op:bool, instance = None):
         self.accounts_page_instance = instance
         self.accounts_page_is_open = op
 
-    def start(self):
+    def run(self):
         
         # entregar a primeira pagina do programa
         
@@ -39,18 +44,22 @@ class Api:
         def dashboard():
             with open(file="state.json", mode="r", encoding="utf-8") as configs_file:
                 configs_dict = json.load(configs_file)
+            if not flask.request.args["t"] == "0":
+                raise Exception("validação erro, request não veio do programa")
+
             return flask.render_template(
                 template_name_or_list="dashboard.html",
                 continue_with_block= "" if configs_dict["continue_with_block"] != "True" else 'checked="true"',
+                shutdown_computer= "" if configs_dict["shutdown_computer"] != "True" else 'checked="true"',
                 min_message_interval=configs_dict["min_message_interval"],
                 max_message_interval=configs_dict["max_message_interval"],
                 selected_file=self.messages_base["filename"],
                 change_account_after_messages=configs_dict["change_account_after_messages"],
                 stop_after_messages=configs_dict["stop_after_messages"],
-                phones=self.accounts_phone_list
+                phones=self.accounts_phone
             )
-        
-        # entregar a a pagina de logs
+    
+        # entregar a pagina de logs
 
         @self.app.route(rule="/maturation-updates",methods=["GET"])
         def logs_page():
@@ -73,8 +82,18 @@ class Api:
         @self.app.route(rule="/api/version-view")
         def view_version_project():
             messagebox.showinfo(
-                title="Maturador de chips",
-                message=f"você está usando a versão {self.VERSION}, verifique a qualquer momento no github se há atualizações disponiveis."
+                "Maturador de chips",
+                f"você está usando a versão {self.VERSION}, verifique a qualquer momento no github se há atualizações disponiveis."
+            )
+            return flask.jsonify(ok=True)
+        
+        # mostrar pagina do disparador 
+
+        @self.app.route(rule="/api/disparador")
+        def disparador():
+            messagebox.showinfo(
+                "Maturador de chips",
+                f"este recurso estará disponivel na proxima atualização!"
             )
             return flask.jsonify(ok=True)
         
@@ -92,6 +111,26 @@ class Api:
             webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips/blob/main/LICENSE")
             return flask.jsonify(ok=True)
         
+        # abrir o link de numero virtual
+
+        @self.app.route(rule="/api/virtual-number-open")
+        def open_virtual_number():
+            try:
+                if os.path.exists(
+                     os.path.join(
+                        os.environ["APPDATA"],
+                        "Telegram Desktop"
+                    )):
+                    telegram_url = "tg://resolve?domain=NotzSMSBot&start=6455672508"
+                
+                else:
+                    raise FileNotFoundError("telegram não encontrado")
+            except:
+                telegram_url = "https://t.me/NotzSMSBot?start=6455672508"
+
+            webbrowser.open(url=telegram_url)
+            return flask.jsonify(ok=True)
+        
                 
         # mostrar contas conectadas
 
@@ -103,20 +142,20 @@ class Api:
             self.SIGNAL_RECEIVER.viewer_accounts.emit()
             return flask.jsonify(ok=True)
         
-        # apoiar projeto (nubank pix link)
+        # relatar problema 
         
-        @self.app.route(rule="/api/apoia-pix-open")
-        def open_apoia_linky():
-            webbrowser.open(url="https://nubank.com.br/pagar/1ciknr/cao9amcj1Y")
+        @self.app.route(rule="/api/issue-open")
+        def open_insues_link():
+            webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips/issues")
             return flask.jsonify(ok=True)
         
         # nova conta adicionada
 
         @self.app.route(rule="/api/account-added", methods=["POST"])
         def account_added():
-            instance = int(flask.request.json["instance"])
+            instance = flask.request.json["sessionName"]
             phone = flask.request.json["phone"]
-            self.accounts_phone_list[instance] = phone
+            self.accounts_phone[instance] = phone
             self.SIGNAL_RECEIVER.new_phone_number.emit()
             return flask.jsonify(ok=True)
         
@@ -126,9 +165,10 @@ class Api:
         def account_blocked():
             account_number = flask.request.json["phone"]
             self.SIGNAL_RECEIVER.account_blocked.emit(account_number)
-            account_index = self.accounts_phone_list.index(account_number)
-            self.accounts_phone_list[account_index] = "Desconectado"
-
+            for key, value in self.accounts_phone.items():
+                if value == account_number:
+                    self.accounts_phone.pop(key)
+                    break
             return flask.jsonify(ok=True)
         
         # selecionar o arquivo de conversas
@@ -136,10 +176,11 @@ class Api:
         @self.app.route(rule="/api/selected-messages-file", methods=["POST"])
         def selected_file():
             file = flask.request.files["file"]
-            file.save("sessions/cache/messages")
-            with open(file="sessions/cache/messages", mode="r", encoding="utf8") as f:
+            file.save("sessions/cache/messages.txt")
+            with open(file="sessions/cache/messages.txt", mode="r", encoding="utf8") as f:
                 content = f.readlines()
-            os.remove("sessions/cache/messages")
+            
+            os.remove("sessions/cache/messages.txt")
             if not content:
                 return flask.jsonify(ok=False, message="o arquivo não pode estar vazio.")
             self.messages_base["filename"]= file.filename
@@ -150,7 +191,7 @@ class Api:
 
         @self.app.route(rule="/api/start-maturation", methods=["GET"])
         def start_maturation():
-            self.SIGNAL_RECEIVER.start_maturation.emit(self.messages_base, self.accounts_phone_list)
+            self.SIGNAL_RECEIVER.start_maturation.emit(self.messages_base, self.accounts_phone)
             return flask.jsonify(ok=True)
 
                 
@@ -160,8 +201,6 @@ class Api:
         def stop_maturation():
             self.SIGNAL_RECEIVER.stop_maturation.emit()
             return flask.jsonify(ok=True)
-
-
 
         # iniciar a API
 

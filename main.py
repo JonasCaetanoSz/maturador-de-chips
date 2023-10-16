@@ -8,6 +8,10 @@ from api import Api
 import threading
 import sys
 
+# redireciona saidas de logs e erros para o aquivo de log
+
+sys.stdout = open("MaturadorLogs.txt", "a", encoding="utf-8")
+sys.stderr = open("MaturadorLogs.txt", "a", encoding="utf-8")
 
 # recebe sinais para fazer alguma ação
 
@@ -21,7 +25,7 @@ class SignalReceive(QtCore.QObject):
     # parar maturação
     stop_maturation = QtCore.pyqtSignal()
     # iniciar maturação
-    start_maturation = QtCore.pyqtSignal(dict, list)
+    start_maturation = QtCore.pyqtSignal(dict, dict)
     # fechar a pagina de contas conectadas
     close_accounts_page = QtCore.pyqtSignal()
 
@@ -38,7 +42,7 @@ def start_maturation(window, messages_file, phones,signals):
 
 # iniciar a aplicação
 
-VERSION = "12.08.2023"
+VERSION = "27.09.2023"
 
 if __name__ == "__main__":
 
@@ -47,8 +51,7 @@ if __name__ == "__main__":
     api = Api(VERSION, signals)
     accounts_page = accounts.MainWindow(api_instance=api)
     signals.viewer_accounts.connect(lambda: api.set_account_page_state(True, accounts_page) == accounts_page.show())
-    threading.Thread(target=api.start,daemon=True).start()
-    window = dashboard.MainWindow(accounts_page, signals)
+    window = dashboard.MainWindow(accounts_page, signals, app)
     
     # conectar os sinais pyqtsignal
 
@@ -59,6 +62,6 @@ if __name__ == "__main__":
     signals.close_accounts_page.connect(lambda: accounts_page.close() )
     
     # iniciar o programa na interface dashboard
-
+    
     window.show()   
     app.exec()

@@ -1,9 +1,11 @@
 // enviar o numero de telefone dessa instancia para "web.whatssap.com"
 // para ser interceptada e esse dado ser processado pela API do programa. 
 
+const session_name = "@SESSIONNAME"
+
 function SendPhoneNumber(phone) {
-  const instanceName = "@INSTANCE"
-  const url = `/maturador/api/account-added/{"instance":"${instanceName}", "phone":"${phone}"}`
+  const instance_index = "@INSTANCE"
+  const url = `/maturador/api/account-added/{"instance":"${instance_index}", "sessionName": "${session_name}" , "phone":"${phone}"}`
   xhr = new XMLHttpRequest()
   xhr.open("GET", url, true)
   xhr.send()

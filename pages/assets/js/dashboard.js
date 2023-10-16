@@ -39,7 +39,8 @@ arquivoInput.addEventListener("change", async function () {
 
 function update_config_send() {
     const stopWithBlock = document.querySelector("#banimentoCheckbox").checked ? "True" : "False";
-    const minMessageInterval = document.querySelector("#intervaloMinInput").value;
+    const shutdown = document.querySelector("#ShutdownCheckbox").checked ? "True" : "False";
+    const minMessageInterval = document.querySelector("#min_messages").value;
     const maxMessageInterval = document.querySelector("#intervaloMaxInput").value;
     const changeAccountAfterMessages = document.querySelector("#trocarContaInput").value;
     const stopAfterMessages = document.querySelector("#pararAposInput").value;
@@ -72,7 +73,8 @@ function update_config_send() {
           min_message_interval: minMessageInterval,
           max_message_interval: maxMessageInterval,
           change_account_after_messages: changeAccountAfterMessages,
-          stop_after_messages: stopAfterMessages
+          stop_after_messages: stopAfterMessages,
+          shutdown_computer: shutdown
         };
       
         const url = "/api/update-configs";
@@ -100,7 +102,8 @@ function update_config_send() {
   }
   
   document.querySelector("#banimentoCheckbox").addEventListener("change", update_config_send);
-  document.querySelector("#intervaloMinInput").addEventListener("change", update_config_send);
+  document.querySelector("#ShutdownCheckbox").addEventListener("change", update_config_send);
+  document.querySelector("#min_messages").addEventListener("change", update_config_send);
   document.querySelector("#intervaloMaxInput").addEventListener("change", update_config_send);
   document.querySelector("#trocarContaInput").addEventListener("change", update_config_send);
   document.querySelector("#pararAposInput").addEventListener("change", update_config_send);  
@@ -133,45 +136,53 @@ function update_config_send() {
       xhr.send()
       })
   
-  // mostrar a pagina do nubank de pix
+  // mostrar a pagina de insues do github
 
-    document.getElementById("PixOpen").addEventListener("click", function (){
+    document.getElementById("insues").addEventListener("click", function (){
 
       let xhr = new XMLHttpRequest()
-      xhr.open("GET", "/api/apoia-pix-open", true)
+      xhr.open("GET", "/api/issue-open", true)
+      xhr.send()
+      })
+  
+    // mostrar a pagina de numero virtual
+
+    document.getElementById("virtualnumber").addEventListener("click", function (){
+
+      let xhr = new XMLHttpRequest()
+      xhr.open("GET", "/api/virtual-number-open", true)
       xhr.send()
       })
 
+      // mostrar a pagina de disparador
+
+      document.getElementById("disparador").addEventListener("click", function (){
+
+        let xhr = new XMLHttpRequest()
+        xhr.open("GET", "/api/disparador", true)
+        xhr.send()
+        })
+    
   // mostrar todas as contas conectadas
 
-document.querySelectorAll(".btn-whatsapp").forEach(
-
-  button => {
-    if (button.textContent == "Ver contas conectadas"){
-
-      button.addEventListener("click", function view_accounts(){
+      document.querySelector(".all-accounts").addEventListener("click", function view_accounts(){
 
         let xhr = new XMLHttpRequest()
         xhr.open("GET", "/api/accounts-view", true)
         xhr.send()
         })
-    }
-  }
-)
 
 // enviar pedido para iniciar a maturação
 
-document.querySelectorAll(".btn-whatsapp").forEach(
+document.querySelector(".start-maturador").addEventListener("click", function start_maturation(){
 
-  button => {
-    if (button.textContent == "Iniciar maturador"){
+  let xhr = new XMLHttpRequest()
+  xhr.open("GET", "/api/start-maturation", true)
+  xhr.send()
+  })
 
-      button.addEventListener("click", function view_accounts(){
+  // fazer o botao de escolher arquivo acionar input
 
-        let xhr = new XMLHttpRequest()
-        xhr.open("GET", "/api/start-maturation", true)
-        xhr.send()
-        })
-    }
-  }
-)
+  document.querySelector("#filess").addEventListener("click", () => {
+    document.querySelector("#arquivoInput").click()
+  })

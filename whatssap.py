@@ -10,13 +10,15 @@ import asyncio
 import random
 import time
 import json
+import os
 
 class Whatssap(QThread):
 
-    def __init__(self, window:MainWindow, messages_file:dict, phones:list, signals, webviews:list) -> None:
+    def __init__(self, window:MainWindow, messages_file:dict, phones:dict, signals, webviews:list) -> None:
         super().__init__()
         self.messages = [i.rstrip("\r").rstrip("\n") for i in messages_file["content"]]
-        self.phones = [phone for phone in phones if phone !=  "Desconectado"]
+        self.phones = list(phones.values())
+        self.phones_dict = phones
         self.webviews = webviews
         self.window = window
         self.signals = signals
@@ -33,7 +35,7 @@ class Whatssap(QThread):
 
     def start(self) -> None:
     
-        if len(self.phones) < 2:
+        if  len(self.phones) < 2:
             messagebox.showerror(title="Maturador de chips", message="número de contas insuficiente para iniciar a maturação. duas contas ou mais são necessárias.")
             return
         
@@ -86,8 +88,9 @@ class Whatssap(QThread):
                 return
             
             # tudo certo enviar a mensagem e aguardar o intervalo escolhido pelo usuário
-            self.open_chat(phone=receive_phone_number)
-            self.send_message(message=message)
+            self.open_chat(phone=receive_phone_number, message=message)
+            #self.send_message(message=message)
+            self.send_message()
             self.close_chat()
             try: asyncio.run(self.send_websocket_message(sender=sender_phone_number, receiver=receive_phone_number, message=message))
             except: pass
@@ -96,7 +99,8 @@ class Whatssap(QThread):
             time.sleep(interval)
                     
         # maturação concluída
-
+        if self.configs["shutdown_computer"] == "True":
+            os.system("shutdown /s /t 30")
         messagebox.showinfo(title="Maturador de chips", message="maturação concluída com sucesso!")
         self.signals.stop_maturation.emit()
 
@@ -108,12 +112,12 @@ class Whatssap(QThread):
         #self.stop_websocket_server()
         #self.websocket_server.terminate()
         try:
-            subprocess.check_call(['taskkill', '/F', '/IM', "websocket_server.exe" ])
+            subprocess.check_call(['taskkill', '/F', '/IM', "websocket_server.exe" ], creationflags=subprocess.CREATE_NO_WINDOW)
         except:
             pass
-        self.window.webview.load(QUrl("http://127.0.0.1:5025/dashboard"))
+        self.window.webview.load(QUrl("http://127.0.0.1:5025/dashboard?t=0"))
         self.window.setWindowTitle("Maturador de chips - Dashboard")
-        self.window.setFixedSize(769, 660)
+        self.window.setFixedSize(767, 620)
 
     # enviar mensagem de log para o websocket
 
@@ -174,16 +178,17 @@ class Whatssap(QThread):
     
     # executar o script que abre o chat da conversa
 
-    def open_chat(self, phone:str):
+    def open_chat(self, phone:str, message):
         with open(file="scripts/open_chat.js", mode="r", encoding="utf8") as script:
-            self.account_sender.page().runJavaScript(script.read().replace("@PHONE", phone ))
+            self.account_sender.page().runJavaScript(script.read().replace("@PHONE", phone ).replace("@MESSAGE", message))
         time.sleep(2)
     
     # enviar mensagem para o numero escolhido
 
-    def send_message(self, message:str):
+    def send_message(self):
         with open(file="scripts/send_message.js", mode="r", encoding="utf8") as script:
-            self.account_sender.page().runJavaScript(script.read().replace("@MESSAGE", message ))
+            #self.account_sender.page().runJavaScript(script.read().replace("@MESSAGE", message ))
+            self.account_sender.page().runJavaScript(script.read())
         time.sleep(1)
     
     # fechar o chat com o contato atual
@@ -192,4 +197,3 @@ class Whatssap(QThread):
         with open(file="scripts/close_chat.js", mode="r", encoding="utf8") as script:
             self.account_sender.page().runJavaScript(script.read())
         time.sleep(1)
-        

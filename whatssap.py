@@ -18,6 +18,7 @@ class Whatssap(QThread):
         super().__init__()
         self.messages = [i.rstrip("\r").rstrip("\n") for i in messages_file["content"]]
         self.phones = list(phones.values())
+        self.phones_len = []
         self.phones_dict = phones
         self.webviews = webviews
         self.window = window
@@ -69,11 +70,17 @@ class Whatssap(QThread):
                 self.account_sender = self.webviews[new_sender]
                 self.messages_send_count = 0 # reset na variável
             
+            # todos numeros foram usados, resetar a lista
+
+            if not self.phones_len or len(self.phones_len) == 1 and self.phones_len[0] == new_sender:
+                self.phones_len = [i for i in range(0, len(self.phones) -1)]
+
             # escolher a conta que vai receber mensagem
 
-            receive_phone_index = random.randint(0, (len(self.phones) -1))
+            receive_phone_index = random.randint(0, len(self.phones_len) -1 )
+
             while receive_phone_index == self.last_number_sender:
-                receive_phone_index = random.randint(0, (len(self.phones) -1))
+                receive_phone_index = random.randint(0, len(self.phones_len) -1 )
             
             # escolher a mensagem que vai ser enviada
 

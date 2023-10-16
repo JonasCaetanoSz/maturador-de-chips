@@ -17,3 +17,7 @@ state.json
 # bytecode python
 
 __pycache__/
+
+# logs do maturador
+
+MaturadorLogs.txt

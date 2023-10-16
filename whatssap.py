@@ -81,6 +81,7 @@ class Whatssap(QThread):
 
             while receive_phone_index == self.last_number_sender:
                 receive_phone_index = random.randint(0, len(self.phones_len) -1 )
+            receive_phone_index = self.phones_len.pop(receive_phone_index)
             
             # escolher a mensagem que vai ser enviada
 

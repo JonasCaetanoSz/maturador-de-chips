@@ -66,12 +66,6 @@ python main.py
 A porta 5025 é usada pela API e a porta 5026 é usada pelo websocket.
 
 
-### Como apagar uma conta?
-
-
-Como ainda não é possível escolher o nome da instância, não achei necessário ter a opção de apagar uma conta. Portanto, se você deseja trocar uma conta, pode simplesmente desconectá-la pelo próprio WhatsApp e reiniciar o programa.
-
-
 ### Quais são os requisitos mínimos do sistema?
 
 
@@ -80,12 +74,17 @@ desenvolvi em uma maquina com processador i3 e 4GB de memoria RAM, portanto, se 
 
 ### Como gerar meu próprio executável?
 
+Este é o comando pyinstaller para gerar o executavel do maturador:
+
+```shell
+pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/pages/assets/medias/icon.ico" --add-data "$(pwd)/state.json;." --add-data "$(pwd)/user-agent;." --add-data "$(pwd)/LICENSE;." --add-data "$(pwd)/scripts;scripts/" --add-data "$(pwd)/pages;pages/" "$(pwd)/main.py"
+```
 
 Este é o comando pyinstaller para gerar o executável do servidor websocket:
 
 
 ```shell
-pyinstaller --noconfirm --onefile --windowed  "<PATH-DO-ARQUIVO-WEBSOCKET_SERVER.PY>"
+pyinstaller --noconfirm --onefile --windowed "$(pwd)/websocket_server.py"
 ```
 
 

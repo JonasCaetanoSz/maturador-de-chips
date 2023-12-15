@@ -1,16 +1,20 @@
-from PyQt5.QtCore import QUrl, pyqtSlot, QObject
-from tkinter import filedialog
+from PyQt5.QtCore import pyqtSlot, QObject
+from tkinter import filedialog, messagebox
 import webbrowser
 import json
 import os
 
 class Controller(QObject):
-    def __init__(self, accounts_page):
+    def __init__(self, accounts_page, version, signals):
         super().__init__()
+        self.siginals = signals
         self.accounts_page_instance = accounts_page
         self.messages_base = {"content":[], "filename":"Selecionar arquivo"}
+        self.VERSION = version
+        self.configs:dict = json.loads((open(file="state.json", mode="r", encoding="utf8").read()))
+        self.connected_numbers = {}
 
-    # bot de numerosa virtuais no telegram
+    # bot de numeros virtuais no telegram
          
     @pyqtSlot()
     def telegram_bot_virtual_number_open(self):
@@ -44,8 +48,6 @@ class Controller(QObject):
     def open_insues_link(self):
         webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips/issues")
 
-
-    
     # abrir o link do repositório do projeto no github
 
     @pyqtSlot()
@@ -76,3 +78,72 @@ class Controller(QObject):
         self.messages_base["content"]= file.read()
         file.close()
         return  json.dumps({"ok":True, "message": "alterações foram salvas com êxito",  "filename": self.messages_base["filename"]})
+    
+    # mostrar versão do projeto
+
+    @pyqtSlot()
+    def view_version_project(self):
+        messagebox.showinfo(
+            "Maturador de chips",
+            f"você está usando a versão {self.VERSION}, verifique a qualquer momento no github se há atualizações disponiveis."
+        )
+
+    # mostrar pagina do disparador 
+
+    @pyqtSlot()
+    def disparador(self):
+        messagebox.showinfo(
+            "Maturador de chips",
+            f"este recurso estará disponivel na proxima atualização!"
+        )
+
+    # obter as configurações do usuario
+        
+    @pyqtSlot(result=str)
+
+    def user_configs(self) -> str:
+        configs = self.configs.copy()
+        configs.update({
+            "filename": self.messages_base["filename"],
+            "accounts": self.connected_numbers.copy()
+        })
+        return json.dumps(configs)
+    
+    # atualizar as configurações do usuario
+
+    @pyqtSlot(str, result=str)
+    def update_user_configs(self, new_configs:str):
+        new_configs = json.loads(new_configs)
+        self.configs = new_configs
+        configs_file = open(file="state.json", mode="w", encoding="utf8")
+        json.dump(new_configs,configs_file, indent=2)
+        configs_file.close()
+        return json.dumps({"ok":True, "message":"alterações foram salvas com êxito"})
+
+    # nova conta adicionada
+
+    def account_added(self, account_data:dict):
+        instance = account_data["sessionName"]
+        phone = account_data["phone"]
+        self.connected_numbers[instance] = phone
+
+    # contas bloqueada ou desconectada
+    
+    def account_blocked(self, account_data):
+        account_number = account_data["phone"]
+        for key, value in self.connected_numbers.items():
+            if value == account_number:
+                self.connected_numbers.pop(key)
+                break
+
+    # iniciar maturação
+    
+    @pyqtSlot(result=str)
+    def start_maturation(self):
+        self.siginals.start_maturation.emit(self.messages_base, self.connected_numbers)
+            
+    # parar a maturação
+        
+    @pyqtSlot(result=str)
+    def stop_maturation(self):
+        self.siginals.stop_maturation.emit()

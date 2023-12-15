@@ -4,12 +4,14 @@ from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtCore import QUrl, Qt
 
-import requests
 import shutil                                          
 import json
 import os
 
-# sobresve as funçoes de log do QWebEnginePage para que as saidas geradas sejam escritas
+SINGNALS = None
+
+# sobresve as funço
+# es de log do QWebEnginePage para que as saidas geradas sejam escritas
 # um aquivo de log. é assim que o programa cosegue executar sem precisar de stdout
 
 class LogCapturingPage(QWebEnginePage):
@@ -43,10 +45,8 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
             url_path = info.requestUrl().path()
             json_string = url_path[url_path.find("{"):url_path.find("}") + 1]
             data = json.loads(json_string)
-            requests.post(
-                url="http://127.0.0.1:5025/api/account-added",
-                json=data
-            )
+            global SINGNALS
+            SINGNALS.new_phone_number.emit(data)
             info.block(True)
         
         # conta bloqueada
@@ -55,23 +55,20 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
             url_path = info.requestUrl().path()
             json_string = url_path[url_path.find("{"):url_path.find("}") + 1]
             data = json.loads(json_string)
-            requests.post(
-                url="http://127.0.0.1:5025/api/account-blocked",
-                json=data
-            )
+            SINGNALS.account_blocked.emit(data)
             info.block(True)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        self.controller = None
         self._opened = False
         super().__init__()
         self.webs_engine = []
         self.setWindowTitle("Maturador de chips - Contas conectadas")
         self.setWindowIcon(QIcon("pages/assets/medias/icon.ico"))
         self.setFixedSize(1060, 650)
-        with open(file="user-agent", mode="r", encoding="utf8") as f:
-            self.USER_AGENT = f.read()
+        with open(file="user-agent", mode="r", encoding="utf8") as f: self.USER_AGENT = f.read()
         self.sessions_waiting_to_be_disconnected = []
         self.webviews:QWebEngineView = []
         self.buttons_layout = QHBoxLayout()
@@ -381,8 +378,8 @@ class MainWindow(QMainWindow):
                 )
                 )
                 try:
-                    self.API_INSTANCE.accounts_phone.pop(key)
-                    self.API_INSTANCE.SIGNAL_RECEIVER.new_phone_number.emit()
+                    self.controller.connected_numbers.pop(key)
+                    SINGNALS.new_phone_number.emit({})
                 except KeyError:
                     pass
                 break

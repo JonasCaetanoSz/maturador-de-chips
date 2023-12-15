@@ -12,18 +12,15 @@ import os
 class Webview(QWebEngineView):
     def __init__(self, parent: QtWidgets.QWidget | None = ...) -> None:
         super().__init__(parent)
-    
-    def reload(self) -> None:
-        self.load(QUrl("http://127.0.0.1:5025/dashboard?t=0"))
 
 # sobresve as funçoes de log do QWebEnginePage para que as saidas geradas sejam escritas
 # um aquivo de log. é assim que o programa cosegue executar sem precisar de stdout
 
 class LogCapturingPage(QWebEnginePage):
     def consoleMessage(self, level, message, lineNumber, sourceID):
-        print(message)
+        pass
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        print(message)
+        pass
 
 class MainWindow(QMainWindow):
     def __init__(self, accounts_page, signals, app, controller:Controller):
@@ -54,7 +51,7 @@ class MainWindow(QMainWindow):
         engine.setWebChannel(channel)
         self.webview.setPage(engine)
         #self.webview.load(QUrl("https://site112.com/editor-online-html"))
-        self.webview.load(QUrl("http://127.0.0.1:5025/dashboard?t=0"))
+        self.webview.load(QUrl.fromLocalFile("/pages/dashboard.html"))
         self.webview.page().action(QWebEnginePage.Back).setVisible(False)
         self.webview.page().action(QWebEnginePage.Reload).setVisible(False)
         self.webview.page().action(QWebEnginePage.WebAction.SavePage).setVisible(False)

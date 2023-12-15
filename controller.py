@@ -1,11 +1,14 @@
 from PyQt5.QtCore import QUrl, pyqtSlot, QObject
+from tkinter import filedialog
 import webbrowser
+import json
 import os
 
 class Controller(QObject):
     def __init__(self, accounts_page):
         super().__init__()
         self.accounts_page_instance = accounts_page
+        self.messages_base = {"content":[], "filename":"Selecionar arquivo"}
 
     # bot de numerosa virtuais no telegram
          
@@ -57,6 +60,19 @@ class Controller(QObject):
 
     # selecionar o arquivo de conversas
 
-    @pyqtSlot()
+    @pyqtSlot(result=str)
     def selected_file(self):
-        pass
+        file_path = filedialog.askopenfilename(
+        filetypes=[("Arquivos de Texto", "*.txt"),],
+        title="Maturador de Chips - selecione o arquivo de mensagens base")
+        if not file_path:
+            return json.dumps({"ok":False, "message": "nenhum arquivo selecionado", "filename": self.messages_base["filename"]})
+        file = open(mode="r", encoding="utf8", file=file_path)
+        if not file.read():
+            file.close()
+            return json.dumps({"ok":False, "message": "o arquivo selecionado está vazio.",  "filename": self.messages_base["filename"]})
+        
+        self.messages_base["filename"]= file.name.split("/")[len(file.name.split("/")) - 1]
+        self.messages_base["content"]= file.read()
+        file.close()
+        return  json.dumps({"ok":True, "message": "alterações foram salvas com êxito",  "filename": self.messages_base["filename"]})

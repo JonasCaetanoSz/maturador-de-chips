@@ -163,8 +163,15 @@ document.querySelector(".start-maturador").addEventListener("click", function st
   xhr.send()
   })
 
-  // fazer o botao de escolher arquivo acionar input
+  // selecionar o arquivo de mensagens
 
   document.querySelector("#filess").addEventListener("click", () => {
-    document.querySelector("#arquivoInput").click()
+    controller.selected_file().then(response =>   
+        {
+      response = JSON.parse(response)
+      $.notify(response.message, { className: response.ok ? "success" : "error"});
+      document.querySelector("#arquivoInputLabel").textContent = response["filename"]
+    } )
+   
+
   })

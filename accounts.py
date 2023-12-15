@@ -63,9 +63,9 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, api_instance):
+    def __init__(self):
+        self._opened = False
         super().__init__()
-        self.API_INSTANCE = api_instance
         self.webs_engine = []
         self.setWindowTitle("Maturador de chips - Contas conectadas")
         self.setWindowIcon(QIcon("pages/assets/medias/icon.ico"))
@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def closeEvent(self, event):
-        self.API_INSTANCE.set_account_page_state(False)
+        self._opened = False
         event.accept()
     
     # criar nova sessão/webview

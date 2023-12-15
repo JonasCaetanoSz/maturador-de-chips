@@ -1,7 +1,9 @@
 import typing
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile , QWebEnginePage
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtCore import QUrl, QSettings
+from PyQt5.QtWidgets import QMainWindow
+from controller import Controller
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 import shutil
@@ -19,12 +21,12 @@ class Webview(QWebEngineView):
 
 class LogCapturingPage(QWebEnginePage):
     def consoleMessage(self, level, message, lineNumber, sourceID):
-        pass
+        print(message)
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        pass
+        print(message)
 
 class MainWindow(QMainWindow):
-    def __init__(self, accounts_page, signals, app):
+    def __init__(self, accounts_page, signals, app, controller:Controller):
         super().__init__()
         self.app = app
         self.settings = QSettings("maturador", "cache")
@@ -47,6 +49,9 @@ class MainWindow(QMainWindow):
         profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
         profile.setHttpAcceptLanguage("pt-br")
         engine = LogCapturingPage(profile, self.webview)
+        channel = QWebChannel(engine)
+        channel.registerObject("controller",controller)
+        engine.setWebChannel(channel)
         self.webview.setPage(engine)
         #self.webview.load(QUrl("https://site112.com/editor-online-html"))
         self.webview.load(QUrl("http://127.0.0.1:5025/dashboard?t=0"))

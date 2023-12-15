@@ -3,6 +3,7 @@ from PyQt5 import QtCore
 import dashboard
 import accounts
 
+from controller import Controller
 from whatssap import Whatssap
 from api import Api
 import threading
@@ -16,8 +17,6 @@ sys.stderr = open("MaturadorLogs.txt", "a", encoding="utf-8")
 # recebe sinais para fazer alguma ação
 
 class SignalReceive(QtCore.QObject):
-    # mostrar a pagina de contas conectadas
-    viewer_accounts = QtCore.pyqtSignal()
     # novo numero adicionado, atualizar a pagina
     new_phone_number = QtCore.pyqtSignal()
     # conta dowhatssap bloqueada ou desconectada
@@ -26,9 +25,6 @@ class SignalReceive(QtCore.QObject):
     stop_maturation = QtCore.pyqtSignal()
     # iniciar maturação
     start_maturation = QtCore.pyqtSignal(dict, dict)
-    # fechar a pagina de contas conectadas
-    close_accounts_page = QtCore.pyqtSignal()
-
 
 # iniciar maturação
 
@@ -49,9 +45,9 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     signals = SignalReceive()
     api = Api(VERSION, signals)
-    accounts_page = accounts.MainWindow(api_instance=api)
-    signals.viewer_accounts.connect(lambda: api.set_account_page_state(True, accounts_page) == accounts_page.show())
-    window = dashboard.MainWindow(accounts_page, signals, app)
+    accounts_page = accounts.MainWindow()
+    controller_instance = Controller(accounts_page)
+    window = dashboard.MainWindow(accounts_page, signals, app, controller_instance)
     
     # conectar os sinais pyqtsignal
 
@@ -59,7 +55,6 @@ if __name__ == "__main__":
     signals.start_maturation.connect(lambda messages_file, phones: start_maturation(window=window, messages_file=messages_file, phones=phones,signals=signals))
     signals.stop_maturation.connect(lambda: threading.Thread(target=wapp.stop() if wapp else None, daemon=True).start())
     signals.account_blocked.connect(lambda phone: wapp.set_account_block(phone=phone))
-    signals.close_accounts_page.connect(lambda: accounts_page.close() )
     
     # iniciar o programa na interface dashboard
     

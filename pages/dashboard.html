@@ -222,6 +222,12 @@
         />
       </div>
     </div>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script>
+      var channel = new QWebChannel(qt.webChannelTransport, function(channel) {
+          window.controller = channel.objects.controller;
+      });
+  </script>
     <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
     <script src="assets/js/notify.js"></script>
     <script src="/assets/js/dashboard.js"></script>

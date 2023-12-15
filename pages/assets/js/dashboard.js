@@ -112,19 +112,13 @@ function update_config_send() {
   // abrir repositório do projeto
 
   document.getElementById("GithubOpen").addEventListener("click", function request_github_open(){
-
-    let xhr = new XMLHttpRequest()
-    xhr.open("GET", "/api/github-open", true)
-    xhr.send()
+    controller.open_github_repository();
   })
 
   // abrir a licença de código do projeto
 
   document.getElementById("LicenseOpen").addEventListener("click", function request_license_open(){
-
-      let xhr = new XMLHttpRequest()
-      xhr.open("GET", "/api/license-open", true)
-      xhr.send()
+    controller.open_license_repository();
     })
 
   // mostrar versão do projeto
@@ -139,37 +133,25 @@ function update_config_send() {
   // mostrar a pagina de insues do github
 
     document.getElementById("insues").addEventListener("click", function (){
-
-      let xhr = new XMLHttpRequest()
-      xhr.open("GET", "/api/issue-open", true)
-      xhr.send()
+      controller.open_insues_link();
       })
   
     // mostrar a pagina de numero virtual
 
     document.getElementById("virtualnumber").addEventListener("click", function (){
-
-      let xhr = new XMLHttpRequest()
-      xhr.open("GET", "/api/virtual-number-open", true)
-      xhr.send()
-      })
+      controller.telegram_bot_virtual_number_open();
+    })
 
       // mostrar a pagina de disparador
 
       document.getElementById("disparador").addEventListener("click", function (){
 
-        let xhr = new XMLHttpRequest()
-        xhr.open("GET", "/api/disparador", true)
-        xhr.send()
         })
     
   // mostrar todas as contas conectadas
 
       document.querySelector(".all-accounts").addEventListener("click", function view_accounts(){
-
-        let xhr = new XMLHttpRequest()
-        xhr.open("GET", "/api/accounts-view", true)
-        xhr.send()
+        controller.accounts_viewer();
         })
 
 // enviar pedido para iniciar a maturação

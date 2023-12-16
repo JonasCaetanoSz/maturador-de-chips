@@ -1,5 +1,6 @@
 from PyQt5.QtCore import pyqtSlot, QObject
-from tkinter import filedialog, messagebox
+from PyQt5.QtWidgets import QMessageBox
+from tkinter import filedialog
 import webbrowser
 import json
 import os
@@ -7,17 +8,17 @@ import os
 class Controller(QObject):
     def __init__(self, accounts_page, version, signals):
         super().__init__()
-        self.siginals = signals
+        self.signals = signals
         self.accounts_page_instance = accounts_page
         self.messages_base = {"content":[], "filename":"Selecionar arquivo"}
         self.VERSION = version
         self.configs:dict = json.loads((open(file="state.json", mode="r", encoding="utf8").read()))
         self.connected_numbers = {}
 
-    # bot de numeros virtuais no telegram
+    # bot de números virtuais no telegram
          
     @pyqtSlot()
-    def telegram_bot_virtual_number_open(self):
+    def telegram_virtual_number_bot_open(self):
         try:
             if os.path.exists(
                     os.path.join(
@@ -36,34 +37,34 @@ class Controller(QObject):
     # exibir contas conectadas
         
     @pyqtSlot()
-    def accounts_viewer(self):
-        if self.accounts_page_instance._opened:
-            self.accounts_page_instance.activateWindow()
-        self.accounts_page_instance._opened = True
+    def view_accounts(self):
+        if self.accounts_page_instance._is_open:
+            return self.accounts_page_instance.activateWindow()
+        self.accounts_page_instance._is_open = True
         self.accounts_page_instance.show()
 
-    # relatar problema 
+    # relatar problema no github
     
     @pyqtSlot()
-    def open_insues_link(self):
+    def open_project_issues(self):
         webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips/issues")
 
     # abrir o link do repositório do projeto no github
 
     @pyqtSlot()
-    def open_github_repository(self):
+    def open_project_repository(self):
         webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips")    
 
     # abrir o link da licença do código
 
     @pyqtSlot()
-    def open_license_repository(self):
+    def open_project_license(self):
         webbrowser.open(url="https://github.com/JonasCaetanoSz/maturador-de-chips/blob/main/LICENSE")
 
     # selecionar o arquivo de conversas
 
     @pyqtSlot(result=str)
-    def selected_file(self):
+    def select_file(self):
         file_path = filedialog.askopenfilename(
         filetypes=[("Arquivos de Texto", "*.txt"),],
         title="Maturador de Chips - selecione o arquivo de mensagens base")
@@ -82,26 +83,29 @@ class Controller(QObject):
     # mostrar versão do projeto
 
     @pyqtSlot()
-    def view_version_project(self):
-        messagebox.showinfo(
-            "Maturador de chips",
-            f"você está usando a versão {self.VERSION}, verifique a qualquer momento no github se há atualizações disponiveis."
+    def view_project_version(self):
+        QMessageBox.about(
+            self.accounts_page_instance,
+            "Maturador de Chips",
+            f"você está usando a versão {self.VERSION}, verifique a qualquer momento no github se há atualizações disponíveis."
         )
 
     # mostrar pagina do disparador 
 
     @pyqtSlot()
     def disparador(self):
-        messagebox.showinfo(
-            "Maturador de chips",
-            f"este recurso estará disponivel na proxima atualização!"
+            QMessageBox.about(
+            self.accounts_page_instance,
+            "Maturador de Chips",
+            "este recurso estará disponível na proxima atualização!"
         )
 
-    # obter as configurações do usuario
+
+    # obter as configurações do usuário
         
     @pyqtSlot(result=str)
 
-    def user_configs(self) -> str:
+    def get_user_configs(self) -> str:
         configs = self.configs.copy()
         configs.update({
             "filename": self.messages_base["filename"],
@@ -109,7 +113,7 @@ class Controller(QObject):
         })
         return json.dumps(configs)
     
-    # atualizar as configurações do usuario
+    # atualizar as configurações do usuário
 
     @pyqtSlot(str, result=str)
     def update_user_configs(self, new_configs:str):
@@ -140,10 +144,10 @@ class Controller(QObject):
     
     @pyqtSlot(result=str)
     def start_maturation(self):
-        self.siginals.start_maturation.emit(self.messages_base, self.connected_numbers)
+        self.signals.start_maturation.emit(self.messages_base, self.connected_numbers)
             
     # parar a maturação
         
     @pyqtSlot(result=str)
     def stop_maturation(self):
-        self.siginals.stop_maturation.emit()
+        self.signals.stop_maturation.emit()

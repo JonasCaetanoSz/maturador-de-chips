@@ -1,8 +1,8 @@
 {
-  "continue_with_block": true,
-  "min_message_interval": "98",
-  "max_message_interval": "100",
-  "change_account_after_messages": "10",
-  "stop_after_messages": "10",
-  "shutdown_computer": true
+  "ContinueOnBlock": true,
+  "MinimumMessageInterval": "67",
+  "MaximumMessageInterval": "90",
+  "ChangeAccountEveryMessages": "5",
+  "StopAfterMessages": "2",
+  "ShutdownAfterCompletion": false
 }

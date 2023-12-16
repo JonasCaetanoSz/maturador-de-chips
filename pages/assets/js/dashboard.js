@@ -1,28 +1,28 @@
-const arquivoInputLabel = document.getElementById('arquivoInputLabel');
+const fileInputLabel = document.getElementById('fileInputLabel');
 
 // processa o pedido para atualizar as configurações
 
-function update_config_send() {
-    const stopWithBlock = document.querySelector("#banimentoCheckbox").checked ;
-    const shutdown = document.querySelector("#ShutdownCheckbox").checked ;
-    const minMessageInterval = document.querySelector("#min_messages").value;
-    const maxMessageInterval = document.querySelector("#intervaloMaxInput").value;
-    const changeAccountAfterMessages = document.querySelector("#trocarContaInput").value;
-    const stopAfterMessages = document.querySelector("#pararAposInput").value;
+function update_user_config() {
+    const ContinueOnBlock = document.querySelector("#ContinueOnBlock").checked ;
+    const ShutdownAfterCompletion = document.querySelector("#ShutdownAfterCompletion").checked ;
+    const MinimumMessageInterval = document.querySelector("#MinimumMessageInterval").value;
+    const MaximumMessageInterval = document.querySelector("#MaximumMessageInterval").value;
+    const ChangeAccountEveryMessages = document.querySelector("#ChangeAccountEveryMessages").value;
+    const stopAfterMessages = document.querySelector("#stopAfterMessages").value;
     const notValidValues = ['', '0' , 0];
 
-    // antes de enviar valida as informações
+    // antes de enviar validar as informações
 
     if (
-      notValidValues.includes(minMessageInterval) 
-      || notValidValues.includes(maxMessageInterval)
-      || notValidValues.includes(changeAccountAfterMessages)
+      notValidValues.includes(MinimumMessageInterval) 
+      || notValidValues.includes(MaximumMessageInterval)
+      || notValidValues.includes(ChangeAccountEveryMessages)
       || notValidValues.includes(stopAfterMessages)
-      || Number(minMessageInterval) < 0
-      || Number(maxMessageInterval) < 0
-      || Number(changeAccountAfterMessages) < 0
+      || Number(MinimumMessageInterval) < 0
+      || Number(MaximumMessageInterval) < 0
+      || Number(ChangeAccountEveryMessages) < 0
       || Number(stopAfterMessages) < 0
-      || Number(maxMessageInterval) <= Number(minMessageInterval)
+      || Number(MaximumMessageInterval) <= Number(MinimumMessageInterval)
       ) {
       
       $.notify("verifique os dados informados", "error");
@@ -33,12 +33,12 @@ function update_config_send() {
     else{
 
         const dadosAtualizados = {
-          continue_with_block: stopWithBlock,
-          min_message_interval: minMessageInterval,
-          max_message_interval: maxMessageInterval,
-          change_account_after_messages: changeAccountAfterMessages,
-          stop_after_messages: stopAfterMessages,
-          shutdown_computer: shutdown
+          "ContinueOnBlock": ContinueOnBlock,
+          "MinimumMessageInterval": MinimumMessageInterval,
+          "MaximumMessageInterval": MaximumMessageInterval,
+          "ChangeAccountEveryMessages": ChangeAccountEveryMessages,
+          "StopAfterMessages": stopAfterMessages,
+          "ShutdownAfterCompletion": ShutdownAfterCompletion
         };
 
         controller.update_user_configs(JSON.stringify(dadosAtualizados)).then(response =>   {
@@ -48,92 +48,92 @@ function update_config_send() {
       }
   }
   
-  document.querySelector("#banimentoCheckbox").addEventListener("change", update_config_send);
-  document.querySelector("#ShutdownCheckbox").addEventListener("change", update_config_send);
-  document.querySelector("#min_messages").addEventListener("change", update_config_send);
-  document.querySelector("#intervaloMaxInput").addEventListener("change", update_config_send);
-  document.querySelector("#trocarContaInput").addEventListener("change", update_config_send);
-  document.querySelector("#pararAposInput").addEventListener("change", update_config_send);  
+  document.querySelector("#ContinueOnBlock").addEventListener("change", update_user_config);
+  document.querySelector("#ShutdownAfterCompletion").addEventListener("change", update_user_config);
+  document.querySelector("#MinimumMessageInterval").addEventListener("change", update_user_config);
+  document.querySelector("#MaximumMessageInterval").addEventListener("change", update_user_config);
+  document.querySelector("#ChangeAccountEveryMessages").addEventListener("change", update_user_config);
+  document.querySelector("#stopAfterMessages").addEventListener("change", update_user_config);  
 
 
   // abrir repositório do projeto
 
-  document.getElementById("GithubOpen").addEventListener("click", function request_github_open(){
-    controller.open_github_repository();
+  document.getElementById("GithubOpen").addEventListener("click", () => {
+    controller.open_project_repository();
   })
 
   // abrir a licença de código do projeto
 
-  document.getElementById("LicenseOpen").addEventListener("click", function request_license_open(){
-    controller.open_license_repository();
+  document.getElementById("LicenseOpen").addEventListener("click",() => {
+    controller.open_project_license();
     })
 
   // mostrar versão do projeto
 
-    document.getElementById("VersionView").addEventListener("click", function request_version_view(){
-      controller.view_version_project();
+    document.getElementById("VersionView").addEventListener("click", () => {
+      controller.view_project_version();
       })
   
-  // mostrar a pagina de insues do github
+  // mostrar a pagina de issues do github
 
-    document.getElementById("insues").addEventListener("click", function (){
-      controller.open_insues_link();
+    document.getElementById("issues").addEventListener("click",  () =>{
+      controller.open_project_issues();
       })
   
     // mostrar a pagina de numero virtual
 
-    document.getElementById("virtualnumber").addEventListener("click", function (){
-      controller.telegram_bot_virtual_number_open();
+    document.getElementById("virtual-number").addEventListener("click",  () =>{
+      controller.telegram_virtual_number_bot_open();
     })
 
       // mostrar a pagina de disparador
 
-      document.getElementById("disparador").addEventListener("click", function (){
+      document.getElementById("disparador").addEventListener("click",  () =>{
         controller.disparador();
         })
     
   // mostrar todas as contas conectadas
 
-      document.querySelector(".all-accounts").addEventListener("click", function view_accounts(){
-        controller.accounts_viewer();
+      document.querySelector(".all-accounts").addEventListener("click",  () =>{
+        controller.view_accounts();
         })
 
 // enviar pedido para iniciar a maturação
 
-document.querySelector(".start-maturador").addEventListener("click", function start_maturation(){
+document.querySelector(".start-maturador").addEventListener("click",  () =>{
   controller.start_maturation();
   })
 
   // selecionar o arquivo de mensagens
 
-  document.querySelector("#filess").addEventListener("click", () => {
-    controller.selected_file().then(response =>   
+  document.querySelector("#files").addEventListener("click", () => {
+    controller.select_file().then(response =>   
         {
       response = JSON.parse(response)
       $.notify(response.message, { className: response.ok ? "success" : "error"});
-      document.querySelector("#arquivoInputLabel").textContent = response["filename"]
+      document.querySelector("#fileInputLabel").textContent = response["filename"]
     } )
    
 
   })
 
 
-  // carregando as configurações do usuario
+  // carregando as configurações do usuário
 
-  controller.user_configs().then(configs => {
+  controller.get_user_configs().then(configs => {
   configs = JSON.parse(configs);
-  document.querySelector("#banimentoCheckbox").checked = configs["continue_with_block"]
-  document.querySelector("#ShutdownCheckbox").checked = configs["shutdown_computer"]
-  document.querySelector("#trocarContaInput").value = configs["change_account_after_messages"]
-  document.querySelector("#pararAposInput").value = configs["stop_after_messages"]
-  document.querySelector("#min_messages").value = configs["min_message_interval"]
-  document.querySelector("#intervaloMaxInput").value = configs["max_message_interval"]
-  arquivoInputLabel.textContent = configs["filename"]
+  document.querySelector("#ContinueOnBlock").checked = configs["ContinueOnBlock"]
+  document.querySelector("#ShutdownAfterCompletion").checked = configs["ShutdownAfterCompletion"]
+  document.querySelector("#ChangeAccountEveryMessages").value = configs["ChangeAccountEveryMessages"]
+  document.querySelector("#stopAfterMessages").value = configs["StopAfterMessages"]
+  document.querySelector("#MinimumMessageInterval").value = configs["MinimumMessageInterval"]
+  document.querySelector("#MaximumMessageInterval").value = configs["MaximumMessageInterval"]
+  fileInputLabel.textContent = configs["filename"]
 
-  const accounts_conteiner = document.querySelector(".home-container02")
+  const accounts_container = document.querySelector(".home-container02")
   Object.keys(configs["accounts"]).forEach(key => {
 
-    accounts_conteiner.innerHTML += ` <div class="home-container03">
+    accounts_container.innerHTML += ` <div class="home-container03">
       <div class="home-container04">
         <span class="home-text03"> ${ configs["accounts"][key] } </span>
         <svg viewBox="0 0 877.7142857142857 1024" class="home-icon2">

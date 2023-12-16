@@ -1,18 +1,27 @@
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QStackedWidget, QScrollArea, QInputDialog, QMessageBox
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEnginePage
-from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PyQt5.QtGui import QIcon, QCursor
-from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtWidgets import (
+    QStackedWidget,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QInputDialog,
+    QHBoxLayout,
+    QScrollArea,
+    QMessageBox,
+    QWidget
+    )
+
+from PyQt5.QtWebEngineWidgets import (QWebEngineView, QWebEngineProfile, QWebEnginePage)
+from PyQt5.QtWebEngineCore import (QWebEngineUrlRequestInterceptor)
+from PyQt5.QtGui import (QIcon, QCursor)
+from PyQt5.QtCore import (QUrl, Qt)
 
 import shutil                                          
 import json
 import os
 
-SINGNALS = None
+SIGNALS = None
 
-# sobresve as funço
-# es de log do QWebEnginePage para que as saidas geradas sejam escritas
-# um aquivo de log. é assim que o programa cosegue executar sem precisar de stdout
+# sobrescreve as funções de log javascript para que, todas as saídas geradas sejam escritas no arquivo de log do maturador
 
 class LogCapturingPage(QWebEnginePage):
     def consoleMessage(self, level, message, lineNumber, sourceID):
@@ -32,9 +41,10 @@ class LogCapturingPage(QWebEnginePage):
             pass
 
 
-# intercptar as request para conseguir encontrar as que é feita para o programa
-# isso é nescesario pois o whatssap web bloqueia requisições feitas para dominios
-# diferente do deles atráves do content security policy (CSP).
+# interceptar as requisições que vem do WhatsApp web para filtrar 
+# as que são feitas para enviar dados ao maturador, isso é necessário 
+# pois o WhatsApp web bloqueia requisições feitas para domínios
+# diferente do deles através do content security policy (CSP).
 
 class RequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info):
@@ -45,8 +55,8 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
             url_path = info.requestUrl().path()
             json_string = url_path[url_path.find("{"):url_path.find("}") + 1]
             data = json.loads(json_string)
-            global SINGNALS
-            SINGNALS.new_phone_number.emit(data)
+            global SIGNALS
+            SIGNALS.new_phone_number.emit(data)
             info.block(True)
         
         # conta bloqueada
@@ -55,14 +65,14 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
             url_path = info.requestUrl().path()
             json_string = url_path[url_path.find("{"):url_path.find("}") + 1]
             data = json.loads(json_string)
-            SINGNALS.account_blocked.emit(data)
+            SIGNALS.account_blocked.emit(data)
             info.block(True)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         self.controller = None
-        self._opened = False
+        self._is_open = False
         super().__init__()
         self.webs_engine = []
         self.setWindowTitle("Maturador de chips - Contas conectadas")
@@ -85,7 +95,7 @@ class MainWindow(QMainWindow):
         self.buttons_widget = QWidget()
         self.buttons_widget.setFixedHeight(50)
 
-        # configura o layout dos botoes de altenar entre instancias
+        # configura o layout dos botoes de alternar entre instancias
 
         buttons_scroll_area = QScrollArea()
         buttons_scroll_area.setWidgetResizable(True)
@@ -112,7 +122,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.stacked_widget)
         
-        # botões "adicionar" e "remove" layout
+        # botões "adicionar" e "remover" layout
 
         buttons_container = QWidget()
         buttons_container.setLayout(main_layout)
@@ -122,7 +132,7 @@ class MainWindow(QMainWindow):
         remove_instance_button = QPushButton("Remover")
         remove_instance_button.clicked.connect(self.delete_session)
 
-        # personaliza os dois botões (add e rem)
+        # personaliza os dois botões "adicionar" e "remover"
 
         add_instance_button.setCursor(QCursor(Qt.PointingHandCursor))
         remove_instance_button.setCursor(QCursor(Qt.PointingHandCursor))
@@ -163,14 +173,14 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(remove_instance_button)
         buttons_container.layout().addLayout(button_layout)
 
-        # configurar o wiget central da janela
+        # configurar o widget central da janela
 
         central_widget = QWidget()
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
     def closeEvent(self, event):
-        self._opened = False
+        self._is_open = False
         event.accept()
     
     # criar nova sessão/webview
@@ -187,10 +197,10 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Maturador de chips","o nome da instância não pode estar vazio")
             
             elif len(session_name) > 11:
-                QMessageBox.critical(self, "Maturador de chips","o nome da instância não pode ter mais de 11 digitos")
+                QMessageBox.critical(self, "Maturador de chips","o nome da instância não pode ter mais de 11 dígitos")
             
             elif os.path.exists(os.path.join("sessions", f"@{session_name}")):
-                QMessageBox.critical(self, "Maturador de chips", f"já existe uma instância com o nome {session_name}, escolha outro nome.")
+                QMessageBox.critical(self, "Maturador de chips", f"já existe uma instância com o nome {session_name}, escolha outro.")
             
             else:
                 session_name = "@" + session_name
@@ -211,7 +221,6 @@ class MainWindow(QMainWindow):
         webview.setPage(engine)
         self.webs_engine.append(engine)
         webview.load(QUrl("https://web.whatsapp.com/"))
-        #webview.load(QUrl("https://example.com/"))
         self.stacked_widget.addWidget(webview)
         self.webviews.append(webview)
         self.create_button(session_name).click()
@@ -248,7 +257,6 @@ class MainWindow(QMainWindow):
             webview.setPage(engine)
             self.webs_engine.append(engine)
             webview.load(QUrl("https://web.whatsapp.com/"))
-            #webview.load(QUrl("https://example.com/"))
             self.create_button(sessionname)
             self.webviews.append(webview)
             webview.page().loadFinished.connect(lambda ok, session_name=sessionname : self.run_script(session_name))
@@ -345,7 +353,7 @@ class MainWindow(QMainWindow):
 
     def delete_session(self):
         if not self.selected_button:
-            return QMessageBox.critical(self, "Maturador de chips","nenhuma instância aberta, impossivel apagar.")
+            return QMessageBox.critical(self, "Maturador de chips","nenhuma instância aberta, impossível apagar.")
         
         confirm = QMessageBox.question(
             self,
@@ -379,7 +387,7 @@ class MainWindow(QMainWindow):
                 )
                 try:
                     self.controller.connected_numbers.pop(key)
-                    SINGNALS.new_phone_number.emit({})
+                    SIGNALS.new_phone_number.emit({})
                 except KeyError:
                     pass
                 break

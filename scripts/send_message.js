@@ -10,3 +10,5 @@ setTimeout(() => {
     let SendButton = document.querySelector('[data-icon="send"]')
     SendButton.click();
 }, 500);
+
+// eu ia mexer nesse script de envio para a mensagem ser enviada direto, mas desisti

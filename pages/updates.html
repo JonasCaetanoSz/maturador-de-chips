@@ -110,7 +110,12 @@
     </div>
     <button class="btn btn-danger" id="stopButton">Parar</button>
   </div>
-
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script>
+    var channel = new QWebChannel(qt.webChannelTransport, function(channel) {
+        window.controller = channel.objects.controller;
+    });
+</script>
   <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
   <script src="assets/js/stackpath.bootstrapcdn.com_bootstrap_4.5.2_js_bootstrap.min.js"></script>
   <script src="assets/js/notify.js"></script>

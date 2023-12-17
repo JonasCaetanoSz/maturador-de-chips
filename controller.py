@@ -1,5 +1,5 @@
+from PyQt5.QtWidgets import QMessageBox, QMainWindow
 from PyQt5.QtCore import pyqtSlot, QObject
-from PyQt5.QtWidgets import QMessageBox
 from tkinter import filedialog
 import webbrowser
 import json
@@ -14,6 +14,8 @@ class Controller(QObject):
         self.VERSION = version
         self.configs:dict = json.loads((open(file="state.json", mode="r", encoding="utf8").read()))
         self.connected_numbers = {}
+        self.dashboard_window:QMainWindow = None
+        self.notifications = []
 
     # bot de números virtuais no telegram
          
@@ -71,12 +73,13 @@ class Controller(QObject):
         if not file_path:
             return json.dumps({"ok":False, "message": "nenhum arquivo selecionado", "filename": self.messages_base["filename"]})
         file = open(mode="r", encoding="utf8", file=file_path)
+        
         if not file.read():
             file.close()
             return json.dumps({"ok":False, "message": "o arquivo selecionado está vazio.",  "filename": self.messages_base["filename"]})
-        
+        file.seek(0)
         self.messages_base["filename"]= file.name.split("/")[len(file.name.split("/")) - 1]
-        self.messages_base["content"]= file.read()
+        self.messages_base["content"]= file.readlines()
         file.close()
         return  json.dumps({"ok":True, "message": "alterações foram salvas com êxito",  "filename": self.messages_base["filename"]})
     
@@ -85,7 +88,7 @@ class Controller(QObject):
     @pyqtSlot()
     def view_project_version(self):
         QMessageBox.about(
-            self.accounts_page_instance,
+            self.dashboard_window,
             "Maturador de Chips",
             f"você está usando a versão {self.VERSION}, verifique a qualquer momento no github se há atualizações disponíveis."
         )
@@ -95,7 +98,7 @@ class Controller(QObject):
     @pyqtSlot()
     def disparador(self):
             QMessageBox.about(
-            self.accounts_page_instance,
+            self.dashboard_window,
             "Maturador de Chips",
             "este recurso estará disponível na proxima atualização!"
         )
@@ -151,3 +154,20 @@ class Controller(QObject):
     @pyqtSlot(result=str)
     def stop_maturation(self):
         self.signals.stop_maturation.emit()
+    
+    # referencia: https://pt.stackoverflow.com/questions/254506/o-que-%C3%A9-long-polling
+    
+    @pyqtSlot(result=str)
+    def long_polling(self) -> str|None:
+        result = self.notifications.copy()
+        self.notifications = []
+        return json.dumps(result)
+    
+    # exibir o QmessageBox
+
+    def message_box(self, message, title) -> None:
+            QMessageBox.about(
+            self.dashboard_window,
+            title,
+            message
+        )

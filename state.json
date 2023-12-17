@@ -1,8 +1,8 @@
 {
-  "ContinueOnBlock": true,
+  "ContinueOnBlock": false,
   "MinimumMessageInterval": "67",
   "MaximumMessageInterval": "90",
   "ChangeAccountEveryMessages": "5",
-  "StopAfterMessages": "2",
+  "StopAfterMessages": "10",
   "ShutdownAfterCompletion": false
 }

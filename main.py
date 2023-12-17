@@ -24,19 +24,20 @@ class SignalReceive(QtCore.QObject):
     stop_maturation = QtCore.pyqtSignal()
     # iniciar maturação
     start_maturation = QtCore.pyqtSignal(dict, dict)
-
+    # exibir um Qmessagebox 
+    message_box = QtCore.pyqtSignal(str, str)
 # iniciar maturação
 
 wapp:WhatsApp = None
 
 def start_maturation(window, messages_file, phones,signals):
-    global wapp
-    wapp = WhatsApp(window=window, messages_file=messages_file, phones=phones,signals=signals, webviews=accounts_page.webviews)
+    global wapp, controller_instance
+    wapp = WhatsApp(window=window, messages_file=messages_file, phones=phones,signals=signals, webviews=accounts_page.webviews, controller=controller_instance)
     wapp.start()
 
 # iniciar a aplicação
 
-VERSION = "27.09.2023"
+VERSION = "16.12.2023"
 
 if __name__ == "__main__":
 
@@ -47,6 +48,7 @@ if __name__ == "__main__":
     controller_instance = Controller(accounts_page, VERSION, signals)
     window = dashboard.MainWindow(accounts_page, signals, app, controller_instance)
     accounts_page.controller = controller_instance
+    controller_instance.dashboard_window = window
 
     # conectar os sinais de pyqtsignal
 
@@ -54,6 +56,7 @@ if __name__ == "__main__":
     signals.start_maturation.connect(lambda messages_file, phones: start_maturation(window=window, messages_file=messages_file, phones=phones,signals=signals))
     signals.stop_maturation.connect(lambda: threading.Thread(target=wapp.stop() if wapp else None, daemon=True).start())
     signals.account_blocked.connect(lambda account_data: ( controller_instance.account_blocked(account_data) == wapp.set_account_block(phone=account_data["phone"]) ))
+    signals.message_box.connect(lambda title, message: controller_instance.message_box(message=message, title=title))
     
     # iniciar o programa na interface dashboard
     

@@ -1,207 +1,167 @@
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtCore import QUrl, QThread
+from controller import Controller
 from dashboard import MainWindow
-from tkinter import messagebox
 
-import websockets
-import subprocess
 import datetime
-import asyncio
 import random
-import time
 import json
+import time
 import os
 
 class WhatsApp(QThread):
 
-    def __init__(self, window:MainWindow, messages_file:dict, phones:dict, signals, webviews:list) -> None:
+    def __init__(self, window:MainWindow, messages_file:dict, phones:dict, signals, webviews:list, controller:Controller) -> None:
         super().__init__()
         self.messages = [i.rstrip("\r").rstrip("\n") for i in messages_file["content"]]
-        self.phones = list(phones.values())
-        self.phones_len = []
-        self.phones_dict = phones
-        self.webviews = webviews
+        self.configs = json.load(open(file="state.json", mode="r", encoding="utf8"))
+        self.OPEN_CHAT_SCRIPT = open(file="scripts/open_chat.js", mode="r", encoding="utf8").read()
+        self.CHECK_BLOCK_SCRIPT = open(file="scripts/check_block.js", mode="r", encoding="utf8").read()
+        self.SEND_MESSAGE_SCRIPT = open(file="scripts/send_message.js", mode="r", encoding="utf8").read()
+        self.CLOSE_CHAT_SCRIPT = open(file="scripts/close_chat.js", mode="r", encoding="utf8").read()
+        self.have_a_blocked_account = False
+        self.controller = controller
+        self.phones = list(set(phones.values()))
         self.window = window
+        self.webviews = webviews
         self.signals = signals
-        self.rundding = False
-        self.configs = self.load_configs()
 
-        # variáveis que ajuda a gerenciar a maturação
-
+        self.phones_sender_control = []
+        self.phones_receiver_control = self.phones.copy()
+        self.current_sending_account = None
+        self.current_receiver_account = None
         self.messages_send_count = 0
-        self.last_number_sender = None
-        self.last_message = None
-        self.account_sender:QWebEngineView = None
-        self.block = False
+        self.sending = tuple()
 
     def start(self) -> None:
+
+        if len(self.phones) < 2:
+            return QMessageBox.about(
+            self.window,
+            "Maturador de Chips",
+            "número de contas insuficiente para iniciar a maturação."
+        )
+
+        elif not self.messages:
+            return QMessageBox.about(
+            self.window,
+            "Maturador de Chips",
+            "o arquivo de mensagens base não foi escolhido ou está vazio."
+        )
     
-        if  len(self.phones) < 2:
-            messagebox.showerror(title="Maturador de chips", message="número de contas insuficiente para iniciar a maturação. duas contas ou mais são necessárias.")
-            return
-        
-        if not self.messages:
-            messagebox.showerror(title="Maturador de chips", message="você não escolheu nenhum arquivo de mensagens ou o escolhido está vazio, por favor corrija isso.")
-            return
-        
-        # fechar a pagina de contas
-        self.signals.close_accounts_page.emit()
-        # transfere o webview principal para a tela de logs e configura a tela
-        
-        self.start_websocket_server()
-        self.window.webview.load(QUrl("http://127.0.0.1:5025/maturation-updates"))
-        self.window.setWindowTitle("Maturador de chips - maturação em andamento ")
         self.window.setFixedSize(749, 560)
+        self.window.webview.load(QUrl.fromLocalFile("/pages/updates.html"))
+        self.window.setWindowTitle("Maturador de chips - maturação em andamento ")
         super().start()
 
-    # maturar os chips em uma theard separada para não travar a interface
+    # finalizar a thread de maturação
+        
+    def stop(self) -> None:
+        super().terminate()
+    
+    # aquecendo os chips em uma segunda thread para não travar a interface gráfica
 
-    def run(self):
-        for i in range(0 , int(self.configs["stop_after_messages"])):
-            
-            # mudar a conta que envia mensagem
+    def run(self) -> None:
+        for execution_count in range(0, int(self.configs["StopAfterMessages"])):
+            self.messages_send_count += 1
 
-            if self.messages_send_count == int(self.configs["change_account_after_messages"]) or  not self.account_sender :
-                new_sender = random.randint(0, (len(self.phones) - 1))
-                while new_sender == self.last_number_sender:
-                    new_sender = random.randint(0, (len(self.phones) -1) )
+            if len( self.phones_receiver_control) <= 2:
+                self.phones_receiver_control = self.phones.copy()
+                self.phones_sender_control = []
+
+            # escolher a conta que envia mensagem
                 
-                self.last_number_sender = new_sender
-                self.account_sender = self.webviews[new_sender]
-                self.messages_send_count = 0 # reset na variável
+            if not self.current_sending_account or int(self.configs["ChangeAccountEveryMessages"]) == self.messages_send_count:
+                current_sending_account = random.choice(self.phones_receiver_control)
+                while current_sending_account in self.phones_sender_control :
+                    current_sending_account = random.choice(self.phones_receiver_control)
+                self.phones_sender_control.append(current_sending_account)
+                self.current_sending_account = current_sending_account
+                self.messages_send_count = 0
             
-            # todos números foram usados, resetar a lista
+            # escolher a conta que vai receber
+                
+            current_receiver_account = random.choice(self.phones_receiver_control)
+            while current_receiver_account == self.current_sending_account:
+                current_receiver_account = random.choice(self.phones_receiver_control)
+            self.current_receiver_account = current_receiver_account
+            self.phones_receiver_control.remove(current_receiver_account)
+            self.sending = ( self.current_sending_account, self.current_receiver_account)
 
-            if not self.phones_len or len(self.phones_len) == 1 and self.phones_len[0] == new_sender:
-                self.phones_len = [i for i in range(0, len(self.phones) -1)]
+            # checando bloqueio e enviando mensagem 
 
-            # escolher a conta que vai receber mensagem
-
-            receive_phone_index = random.randint(0, len(self.phones_len) -1 )
-
-            while receive_phone_index == self.last_number_sender:
-                receive_phone_index = random.randint(0, len(self.phones_len) -1 )
-            receive_phone_index = self.phones_len.pop(receive_phone_index)
-            
-            # escolher a mensagem que vai ser enviada
-
-            message = self.messages[random.randint(0,  (len(self.messages) -1) )]
-            receive_phone_number = self.phones[receive_phone_index]
-            sender_phone_number = self.phones[self.last_number_sender]
-
-            account_is_blocked = self.check_block(sender_phone_number)
+            account_sender_webview:QWebEngineView = self.webviews[ self.phones.index(self.sending[0] ) ]
+            message = random.choice(self.messages)
+            account_is_blocked = self.check_block(self.sending[0], account_webview=account_sender_webview)
             if account_is_blocked == -1:
                 continue
             elif account_is_blocked:
                 return
             
-            # tudo certo enviar a mensagem e aguardar o intervalo escolhido pelo usuário
-            self.open_chat(phone=receive_phone_number, message=message)
-            #self.send_message(message=message)
-            self.send_message()
-            self.close_chat()
-            try: asyncio.run(self.send_websocket_message(sender=sender_phone_number, receiver=receive_phone_number, message=message))
-            except: pass
-            self.messages_send_count += 1
-            interval = random.randint(int(self.configs["min_message_interval"]), int(self.configs["max_message_interval"]))
-            time.sleep(interval)
-                    
+            account_sender_webview.page().runJavaScript(self.OPEN_CHAT_SCRIPT)
+            time.sleep(2)
+            account_sender_webview.page().runJavaScript(self.SEND_MESSAGE_SCRIPT.replace("@PHONE", self.sending[1] ).replace("@MESSAGE", message))
+            time.sleep(1)
+            account_sender_webview.page().runJavaScript(self.CLOSE_CHAT_SCRIPT)
+            time.sleep(1)
+
+            self.controller.notifications.append({
+                "enviadoDe": self.sending[0],
+                "recebidoPor": self.sending[1],
+                "mensagem": message,
+                "horario":  datetime.datetime.now().strftime("%H:%M:%S") 
+            })
+
+            # aguardando o fim do intervalo definido pelo usuário
+
+            time.sleep( random.randint( int(self.configs["MinimumMessageInterval"]) ,  int(self.configs["MaximumMessageInterval"]) ))
+
         # maturação concluída
-        if self.configs["shutdown_computer"] == "True":
+            
+        if self.configs["ShutdownAfterCompletion"]:
             os.system("shutdown /s /t 30")
-        messagebox.showinfo(title="Maturador de chips", message="maturação concluída com sucesso!")
+        self.signals.message_box.emit(
+                "Maturador de chips",
+                "maturação concluída com sucesso!")
         self.signals.stop_maturation.emit()
-
-    # parar maturação e voltar pro dashboard
-    
+    # parar maturação
+            
     def stop(self):
-        self.rundding = False
         super().terminate()
-        #self.stop_websocket_server()
-        #self.websocket_server.terminate()
-        try:
-            subprocess.check_call(['taskkill', '/F', '/IM', "websocket_server.exe" ], creationflags=subprocess.CREATE_NO_WINDOW)
-        except:
-            pass
-        self.window.webview.load(QUrl("http://127.0.0.1:5025/dashboard?t=0"))
-        self.window.setWindowTitle("Maturador de chips - Dashboard")
         self.window.setFixedSize(767, 620)
-
-    # enviar mensagem de log para o websocket
-
-    async def send_websocket_message(self, sender:str, receiver:str, message:str):
-        async with websockets.connect('ws://localhost:5026') as websocket:
-            data = {
-            "enviadoDe": sender,
-            "recebidoPor": receiver,
-            "mensagem":message,
-            "horario": datetime.datetime.now().strftime("%H:%M:%S") 
-            }
-            mensagem_json = json.dumps(data)
-            await websocket.send(mensagem_json)
+        self.window.webview.load(QUrl.fromLocalFile("/pages/dashboard.html"))
+        self.window.setWindowTitle("Maturador de chips - Dashboard")
     
-    # iniciar servidor websocket
-
-    def start_websocket_server(self):
-        subprocess.Popen(executable="websocket_server.exe", args=[])
-
-    # carrega as configurações do usuário
-
-    def load_configs(self) -> dict:
-        with open(file="state.json", mode="r", encoding="utf-8") as f:
-            return json.load(fp=f)
-    
-    # setar que uma conta foi bloqueada
-
+    # definir que uma conta foi bloqueada
+        
     def set_account_block(self, phone:str):
-        self.block = True
-    
+        self.have_a_blocked_account = True
+
     # checar se a conta que esta enviando mensagem foi bloqueada os desconectada
 
-    def check_block(self, phone:str) -> bool|int:
-        with open(file="scripts/check_block.js", mode="r", encoding="utf8") as f:
-            script = f.read()
-        self.account_sender.page().runJavaScript(script.replace("@PHONE", phone)) 
-        time.sleep(3) # acredito que seja tempo suficiente para o script rodar e enviar o sinal para a API
+    def check_block(self, phone:str, account_webview:QWebEngineView) -> bool|int:
+
+        account_webview.page().runJavaScript(self.CHECK_BLOCK_SCRIPT.replace("@PHONE", phone)) 
+        time.sleep(3)
         
-        if self.block and self.configs["continue_with_block"] == "False":
-            messagebox.showerror(title="Maturador de chips" ,message=f"o número {phone} foi desconectado ou banido. parando maturação!")
+        if self.have_a_blocked_account and not self.configs["ContinueOnBlock"]:
+            self.signals.message_box.emit(
+            "Maturador de Chips",
+            f"o número {phone} foi desconectado ou banido. parando maturação!")
             self.signals.stop_maturation.emit()
             return True
         
-        elif self.block and len(self.phones) == 2:
-            messagebox.showerror(title="Maturador de chips", message=f"o número {phone} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. parando maturação!")
+        elif self.have_a_blocked_account and len(self.phones) == 2:
+            self.signals.message_box.emit(
+                "Maturador de Chips",
+                f"o número {phone} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. parando maturação!")
             self.signals.stop_maturation.emit()
             return True
 
-        elif self.block:
-            self.account_sender.page().runJavaScript(f""" $.notify("o numero {phone} foi desconectado", "error"); """)
-            self.phones.pop(self.last_number_sender)
-            self.block = False
-            self.account_sender = None
-            self.last_number_sender = None
+        elif self.have_a_blocked_account:
+            self.phones.remove(phone)
+            self.have_a_blocked_account = False
             return -1
         
         return False
-    
-    # executar o script que abre o chat da conversa
-
-    def open_chat(self, phone:str, message):
-        with open(file="scripts/open_chat.js", mode="r", encoding="utf8") as script:
-            self.account_sender.page().runJavaScript(script.read().replace("@PHONE", phone ).replace("@MESSAGE", message))
-        time.sleep(2)
-    
-    # enviar mensagem para o numero escolhido
-
-    def send_message(self):
-        with open(file="scripts/send_message.js", mode="r", encoding="utf8") as script:
-            #self.account_sender.page().runJavaScript(script.read().replace("@MESSAGE", message ))
-            self.account_sender.page().runJavaScript(script.read())
-        time.sleep(1)
-    
-    # fechar o chat com o contato atual
-
-    def close_chat(self):
-        with open(file="scripts/close_chat.js", mode="r", encoding="utf8") as script:
-            self.account_sender.page().runJavaScript(script.read())
-        time.sleep(1)

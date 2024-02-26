@@ -10,10 +10,6 @@
 
 sessions/
 
-# configurações dentro do programa
-
-state.json
-
 # bytecode python
 
 __pycache__/

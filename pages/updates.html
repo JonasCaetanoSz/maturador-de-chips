@@ -85,9 +85,38 @@
     .messageTd {
       padding: 20px;
     }
+
+    .alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #f44336;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 999;
+}
+
+.closebtn {
+    margin-left: 15px;
+    color: white;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.closebtn:hover {
+    color: black;
+}
   </style>
 </head>
 <body>
+  <div class="alert" hidden="true">
+    <span class="closebtn"  onclick="this.parentElement.style.display='none';">&times;</span>
+</div>
   <div class="container">
     <table class="table">
       <thead>

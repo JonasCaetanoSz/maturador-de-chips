@@ -26,6 +26,7 @@ class SignalReceive(QtCore.QObject):
     start_maturation = QtCore.pyqtSignal(dict, dict)
     # exibir um Qmessagebox 
     message_box = QtCore.pyqtSignal(str, str)
+
 # iniciar maturação
 
 wapp:WhatsApp = None
@@ -37,7 +38,7 @@ def start_maturation(window, messages_file, phones,signals):
 
 # iniciar a aplicação
 
-VERSION = "16.12.2023"
+VERSION = "24.02.2024"
 
 if __name__ == "__main__":
 
@@ -49,10 +50,10 @@ if __name__ == "__main__":
     window = dashboard.MainWindow(accounts_page, signals, app, controller_instance)
     accounts_page.controller = controller_instance
     controller_instance.dashboard_window = window
-
+    
     # conectar os sinais de pyqtsignal
 
-    signals.new_phone_number.connect(lambda account_data:( controller_instance.account_added(account_data) == window.webview.reload() if "/dashboard" in window.webview.url().toString() else None) if account_data else window.webview.reload())
+    signals.new_phone_number.connect(lambda account_data: [controller_instance.account_added(account_data), window.webview.reload()] if account_data else window.webview.reload())
     signals.start_maturation.connect(lambda messages_file, phones: start_maturation(window=window, messages_file=messages_file, phones=phones,signals=signals))
     signals.stop_maturation.connect(lambda: threading.Thread(target=wapp.stop() if wapp else None, daemon=True).start())
     signals.account_blocked.connect(lambda account_data: ( controller_instance.account_blocked(account_data) == wapp.set_account_block(phone=account_data["phone"]) ))

@@ -4,11 +4,14 @@ const fileInputLabel = document.getElementById('fileInputLabel');
 
 function update_user_config() {
     const ContinueOnBlock = document.querySelector("#ContinueOnBlock").checked ;
+    const ChangeAccountEveryMessages = document.querySelector("#ChangeAccountEveryMessages").value;
+    const messageInputMethod = document.querySelector("#messagesmethod").selectedOptions[0].value
     const ShutdownAfterCompletion = document.querySelector("#ShutdownAfterCompletion").checked ;
     const MinimumMessageInterval = document.querySelector("#MinimumMessageInterval").value;
     const MaximumMessageInterval = document.querySelector("#MaximumMessageInterval").value;
-    const ChangeAccountEveryMessages = document.querySelector("#ChangeAccountEveryMessages").value;
     const stopAfterMessages = document.querySelector("#stopAfterMessages").value;
+    const openAIToken = document.querySelector("#GptKeyContext").value 
+    const AIUnofficialToken = document.querySelector("#GptKeyUnofficialContext").value
     const notValidValues = ['', '0' , 0];
 
     // antes de enviar validar as informações
@@ -23,6 +26,7 @@ function update_user_config() {
       || Number(ChangeAccountEveryMessages) < 0
       || Number(stopAfterMessages) < 0
       || Number(MaximumMessageInterval) <= Number(MinimumMessageInterval)
+      || notValidValues.includes(messageInputMethod)
       ) {
       
       $.notify("verifique os dados informados", "error");
@@ -38,7 +42,11 @@ function update_user_config() {
           "MaximumMessageInterval": MaximumMessageInterval,
           "ChangeAccountEveryMessages": ChangeAccountEveryMessages,
           "StopAfterMessages": stopAfterMessages,
-          "ShutdownAfterCompletion": ShutdownAfterCompletion
+          "ShutdownAfterCompletion": ShutdownAfterCompletion,
+          "messageInputMethod": messageInputMethod,
+          "AIUnofficialToken": AIUnofficialToken,
+          "openAIToken": openAIToken
+
         };
 
         controller.update_user_configs(JSON.stringify(dadosAtualizados)).then(response =>   {
@@ -53,8 +61,9 @@ function update_user_config() {
   document.querySelector("#MinimumMessageInterval").addEventListener("change", update_user_config);
   document.querySelector("#MaximumMessageInterval").addEventListener("change", update_user_config);
   document.querySelector("#ChangeAccountEveryMessages").addEventListener("change", update_user_config);
-  document.querySelector("#stopAfterMessages").addEventListener("change", update_user_config);  
-
+  document.querySelector("#stopAfterMessages").addEventListener("change", update_user_config); 
+  document.querySelector("#GptKeyContext").addEventListener("change", update_user_config);  
+  document.querySelector("#GptKeyUnofficialContext").addEventListener("change", update_user_config);  
 
   // abrir repositório do projeto
 
@@ -104,17 +113,41 @@ document.querySelector(".start-maturador").addEventListener("click",  () =>{
   controller.start_maturation();
   })
 
+  // selecionar o método de entrada para mensagens
+
+  document.querySelector("#messagesmethod").addEventListener("change", (select) => {
+
+    if (select.target.selectedOptions[0].value === "byFile") {
+        document.querySelector("#GptKeyUnofficialContext").hidden = true;
+        document.querySelector(".home-icon6").style.visibility = "visible"
+        document.querySelector("#GptKeyContext").hidden = true;
+        fileInputLabel.hidden = false;
+
+    } else if (select.target.selectedOptions[0].value === "byOpenAI") {
+        document.querySelector("#GptKeyUnofficialContext").hidden = true;
+        document.querySelector(".home-icon6").style.visibility = "hidden"
+        document.querySelector("#GptKeyContext").hidden = false;
+        fileInputLabel.hidden = true;
+    }
+
+    else {
+      document.querySelector(".home-icon6").style.visibility = "hidden"
+      document.querySelector("#GptKeyUnofficialContext").hidden = false;
+      document.querySelector("#GptKeyContext").hidden = true;
+      fileInputLabel.hidden = true;
+    }
+
+  })
+
   // selecionar o arquivo de mensagens
 
-  document.querySelector("#files").addEventListener("click", () => {
-    controller.select_file().then(response =>   
-        {
+  document.querySelector("#fileInputLabel").addEventListener("click", () => {
+
+    controller.select_file().then(response => {
       response = JSON.parse(response)
       $.notify(response.message, { className: response.ok ? "success" : "error"});
       document.querySelector("#fileInputLabel").textContent = response["filename"]
     } )
-   
-
   })
 
 
@@ -128,6 +161,10 @@ document.querySelector(".start-maturador").addEventListener("click",  () =>{
   document.querySelector("#stopAfterMessages").value = configs["StopAfterMessages"]
   document.querySelector("#MinimumMessageInterval").value = configs["MinimumMessageInterval"]
   document.querySelector("#MaximumMessageInterval").value = configs["MaximumMessageInterval"]
+  document.querySelector("#messagesmethod").selectedIndex = ["byFile", "byOpenAI", "byOpenAIUnofficial"].indexOf( configs["messageInputMethod"] )
+  document.querySelector("#GptKeyUnofficialContext").value = configs["AIUnofficialToken"]
+  document.querySelector("#GptKeyContext").value = configs["openAIToken"]
+  document.querySelector("#messagesmethod").dispatchEvent(new Event("change"));
   fileInputLabel.textContent = configs["filename"]
 
   const accounts_container = document.querySelector(".home-container02")
@@ -150,3 +187,10 @@ document.querySelector(".start-maturador").addEventListener("click",  () =>{
   
 
 })
+
+setTimeout(() => {
+
+  document.querySelector("#messagesmethod").addEventListener("change", update_user_config);  
+
+
+}, 1000 * 1)

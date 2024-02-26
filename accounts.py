@@ -12,9 +12,11 @@ from PyQt5.QtWidgets import (
 
 from PyQt5.QtWebEngineWidgets import (QWebEngineView, QWebEngineProfile, QWebEnginePage)
 from PyQt5.QtWebEngineCore import (QWebEngineUrlRequestInterceptor)
+from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtGui import (QIcon, QCursor)
 from PyQt5.QtCore import (QUrl, Qt)
 
+from controller import Controller
 import shutil                                          
 import json
 import os
@@ -39,7 +41,6 @@ class LogCapturingPage(QWebEnginePage):
                 log_file.write(log_message + "\n")
         except:
             pass
-
 
 # interceptar as requisições que vem do WhatsApp web para filtrar 
 # as que são feitas para enviar dados ao maturador, isso é necessário 
@@ -68,10 +69,9 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
             SIGNALS.account_blocked.emit(data)
             info.block(True)
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
-        self.controller = None
+        self.controller:Controller = None
         self._is_open = False
         super().__init__()
         self.webs_engine = []
@@ -234,11 +234,10 @@ class MainWindow(QMainWindow):
         except FileNotFoundError: # a pasta de sessões ainda não existe
             return 
         for sessionname in sessions:
-
             webview = QWebEngineView()
             profile = QWebEngineProfile(f"storage{sessionname}", webview)
             session_dir = os.getcwd() + f"/sessions/{sessionname}"
-
+            
             # apaga Service Worker porque está causando problema com a sessão
 
             service_Worker_path = os.path.join(session_dir, "Service Worker")
@@ -261,7 +260,7 @@ class MainWindow(QMainWindow):
             self.webviews.append(webview)
             webview.page().loadFinished.connect(lambda ok, session_name=sessionname : self.run_script(session_name))
     
-    # injeta script login.js
+    # injeta script login.js e script do webchannel
 
     def run_script(self, session_name:str):
         for idx, key in enumerate(start=0, iterable=self.buttons.keys()):

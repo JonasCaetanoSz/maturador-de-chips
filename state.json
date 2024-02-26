@@ -2,7 +2,10 @@
   "ContinueOnBlock": false,
   "MinimumMessageInterval": "67",
   "MaximumMessageInterval": "90",
-  "ChangeAccountEveryMessages": "5",
+  "ChangeAccountEveryMessages": "3",
   "StopAfterMessages": "10",
-  "ShutdownAfterCompletion": false
+  "ShutdownAfterCompletion": false,
+  "messageInputMethod": "byFile",
+  "AIUnofficialToken": "",
+  "openAIToken": ""
 }

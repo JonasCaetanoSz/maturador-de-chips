@@ -170,4 +170,4 @@ class Controller(QObject):
             self.dashboard_window,
             title,
             message
-        )
+        ) 

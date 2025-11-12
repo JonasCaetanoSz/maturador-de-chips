@@ -190,6 +190,16 @@
       background: #a06b45;
     }
   </style>
+
+  <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+  <script>
+    var channel = new QWebChannel(qt.webChannelTransport, function(channel) {
+        window.controller = channel.objects.controller;
+    });
+</script>
+
 </head>
 <body>
   <!-- Botão de fechar -->
@@ -264,14 +274,7 @@
     <!-- Botão -->
     <button class="save-btn" id="saveBtn">💾 Salvar preferências</button>
   </main>
-
-  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-    <script>
-      var channel = new QWebChannel(qt.webChannelTransport, function(channel) {
-          window.controller = channel.objects.controller;
-      });
-  </script>
-
+  
   <script>
     const select = document.getElementById("msgSelect");
     const extraDiv = document.getElementById("extraOption");
@@ -309,15 +312,8 @@
     document.getElementById("saveBtn").addEventListener("click", () => {
       alert("💾 Preferências salvas com sucesso!");
     });
-
-    // Ação de fechar pagina
-
-    document.querySelector(".close-btn").addEventListener("click", () => {
-      controller.close_preferences_signal();
-    })
-
-    
   </script>
+  <script src="assets/js/home.js"></script>
 
 </body>
 </html>

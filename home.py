@@ -21,9 +21,9 @@ class Webview(QWebEngineView):
     
 class LogCapturingPage(QWebEnginePage):
     def consoleMessage(self, level, message, lineNumber, sourceID):
-        pass
+        print(message)
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        pass
+        print(message)
     
 
 class Home(QMainWindow):
@@ -32,6 +32,7 @@ class Home(QMainWindow):
         self.setWindowTitle("Maturador de chips 2025.11.12")
         self.setGeometry(100, 100, 1200, 700)
         self.controller = controller
+        self.webviews = {}
 
         # === Cria o menu ===
         menubar = self.menuBar()

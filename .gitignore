@@ -7,7 +7,7 @@
 .vscode/
 
 # sessões de todos os webviews
-
+cache/
 sessions/
 
 # bytecode python

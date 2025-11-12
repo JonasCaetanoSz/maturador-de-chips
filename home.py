@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QMenuBar, QAction
+from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QAction
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 
@@ -12,12 +12,17 @@ class Home(QMainWindow):
 
         # === Cria o menu ===
         menubar = self.menuBar()
-        opcoes_menu = menubar.addMenu("Opções")
+        options_menu = menubar.addMenu("Opções")
 
         # Ação de configurações
         config_action = QAction("Configurações", self)
         config_action.triggered.connect(self.abrir_configuracoes)
-        opcoes_menu.addAction(config_action)
+        options_menu.addAction(config_action)
+
+        # Ação de adicionar conta
+        add_account_action = QAction("Adicionar conta", self)
+        add_account_action.triggered.connect(self.adicionar_conta)
+        options_menu.addAction(add_account_action)
 
         # === Layout central ===
         central_widget = QWidget()
@@ -50,3 +55,7 @@ class Home(QMainWindow):
             self.main_view.setHtml(
                 "<h3 style='color:white;text-align:center;margin-top:40px;'>Arquivo settings.html não encontrado</h3>"
             )
+
+    def adicionar_conta(self):
+        """Abre a página de adicionar conta (ou pode futuramente abrir outra URL)"""
+        pass

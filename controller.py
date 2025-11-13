@@ -10,6 +10,7 @@ class Controller(QObject):
         super().__init__()
         self.signals = signals
         self.home = None
+        self.messages_base = {"content":[], "filename": "Selecionar arquivo", "path":""}
 
     def setHomePage(self, home):
         """Definir instancia da janela principal"""
@@ -34,6 +35,7 @@ class Controller(QObject):
     def update_user_configs(self, new_configs:str):
          with open(file="preferences.json", mode="w", encoding="utf-8") as file:
               json_data = json.loads(new_configs)
+              json_data.update({"seletedFilePath": self.messages_base["path"] })
               json.dump(obj=json_data, fp=file, indent=2)
          
     @pyqtSlot(str, str)
@@ -44,3 +46,24 @@ class Controller(QObject):
             title,
             message
         )
+    
+    @pyqtSlot(result=str)
+    def select_file(self):
+        """Selecionar arquivo de mensagens"""
+        file_path = filedialog.askopenfilename(
+        filetypes=[("Arquivos de Texto", "*.txt"),],
+        title="Maturador de Chips - selecione o arquivo de mensagens")
+        if not file_path:
+            return None
+        file = open(mode="r", encoding="utf8", file=file_path)
+
+        if not file.read():
+            self.show_alert("Maturador de chips", "O arquivo selecionado não pode estar vazio!")
+            file.close()
+            return None
+        file.seek(0)
+        self.messages_base["filename"]= file.name.split("/")[len(file.name.split("/")) - 1]
+        self.messages_base["content"]= file.readlines()
+        self.messages_base["path"] = file_path
+        file.close()
+        return  file_path

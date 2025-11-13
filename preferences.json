@@ -6,5 +6,6 @@
   "MaxInterval": 10,
   "LimitMessages": 10,
   "MessageType": "file",
-  "ApiToken": ""
+  "ApiToken": "",
+  "seletedFilePath": ""
 }

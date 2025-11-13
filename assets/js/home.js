@@ -7,19 +7,19 @@
   controller.get_user_configs().then(configs => {
     const preferences = JSON.parse(configs);
 
-    // === Checkboxes ===
+    //  Checkboxes 
     document.getElementById("shutdown").checked = preferences.ShutdownAfterCompletion;
     document.getElementById("sound").checked = preferences.PlaySound;
     document.getElementById("continue").checked = preferences.ContinueIfDisconnected;
 
-    // === Intervalos ===
+    //  Intervalos 
     document.getElementById("minInterval").value = preferences.MinInterval;
     document.getElementById("maxInterval").value = preferences.MaxInterval;
 
-    // === Limite de mensagens ===
+    //  Limite de mensagens 
     document.getElementById("limitMessages").value = preferences.LimitMessages;
 
-    // === Fonte de mensagens ===
+    //  Fonte de mensagens 
     const select = document.getElementById("msgSelect");
     select.value = preferences.MessageType;
 
@@ -27,13 +27,13 @@
     updateExtraOption();
 
     // Se for OpenAI
-    if (preferences.MessageType === "openai") {
+    if (preferences.MessageType  == "openai") {
       const apiTokenInput = document.getElementById("apiToken");
       if (apiTokenInput) apiTokenInput.value = preferences.ApiToken;
     }
 
     // Se for arquivo
-    if (preferences.MessageType === "file") {
+    if (preferences.MessageType ===  "file") {
       const fileNameSpan = document.getElementById("fileName");
       if (fileNameSpan && preferences.FilePath)
         fileNameSpan.textContent = "Arquivo atual: " + preferences.FilePath.split("\\").pop();

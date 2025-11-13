@@ -34,7 +34,7 @@ class Home(QMainWindow):
         self.controller = controller
         self.webviews = {}
 
-        # === Cria o menu ===
+        # Cria o menu
         menubar = self.menuBar()
         options_menu = menubar.addMenu("Opções")
 
@@ -48,18 +48,20 @@ class Home(QMainWindow):
         add_account_action.triggered.connect(self.adicionar_conta)
         options_menu.addAction(add_account_action)
 
-        # === Layout central ===
+        # Layout central
         central_widget = QWidget()
         layout = QHBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # === WebView menor (sidebar 25%) ===
+        #  WebView menor (sidebar 25%)
+
         self.sidebar = Webview(self)
         sidebar_path = os.path.abspath("whatsapp_list.html")
         self.sidebar.setUrl(QUrl.fromLocalFile(sidebar_path))
 
-        # === QStackedWidget para o webview maior (75%) ===
+        # QStackedWidget para o webview maior (75%)
+
         self.stacked = QStackedWidget()
 
         # Página 0 (index 0): Nenhuma conta conectada (widget simples com QLabel)

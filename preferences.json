@@ -1,11 +1,10 @@
 {
-  "ShutdownAfterCompletion": false,
-  "SoundNotifications": true,
+  "ShutdownAfterCompletion": true,
+  "PlaySound": true,
   "ContinueIfDisconnected": true,
-  "IntervalMin": 1,
-  "IntervalMax": 10,
-  "MessageLimit": 50,
-  "MessageSource": "file",
-  "ApiToken": "",
-  "FilePath": ""
+  "MinInterval": 1,
+  "MaxInterval": 10,
+  "LimitMessages": 10,
+  "MessageType": "file",
+  "ApiToken": ""
 }

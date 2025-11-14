@@ -29,28 +29,34 @@ class LogCapturingPage(QWebEnginePage):
         print(message)
     
 class Home(QMainWindow):
-    def __init__(self, controller:Controller):
+    def __init__(self, controller:Controller, app):
         super().__init__()
         self.setWindowTitle("Maturador de chips 2025.11.12")
         self.setWindowIcon( QIcon("assets/medias/icon.ico") )
         self.setGeometry(100, 100, 1200, 700)
+        self.app = app
         self.controller = controller
         self.webviews = {}
 
         # Cria o menu
         menubar = self.menuBar()
-        options_menu = menubar.addMenu("Opções")
+        self.options_menu = menubar.addMenu("Opções")
 
         # Ação de configurações
         config_action = QAction("Configurações", self)
         config_action.triggered.connect(self.open_preferences)
-        options_menu.addAction(config_action)
+        self.options_menu.addAction(config_action)
 
         # Ação de adicionar conta
         add_account_action = QAction("Adicionar conta", self)
         add_account_action.triggered.connect(self.add_account)
-        options_menu.addAction(add_account_action)
+        self.options_menu.addAction(add_account_action)
 
+        # Ação de remover conta
+        self.remove_account_action = QAction("Remover conta", self)
+        self.remove_account_action.setEnabled(True)
+        self.remove_account_action.triggered.connect(self.delete_session)
+        
         # Layout central
         central_widget = QWidget()
         layout = QHBoxLayout(central_widget)
@@ -120,6 +126,7 @@ class Home(QMainWindow):
 
     def open_preferences(self):
         """Muda o webview maior para configurações"""
+        self.options_menu.removeAction(self.remove_account_action)
         self.settings_view.reload()
         self.stacked.setCurrentIndex(1)
 
@@ -160,7 +167,7 @@ class Home(QMainWindow):
         self.create_session_button(name)
         self.stacked.setCurrentWidget(webview)
 
-    
+
     def create_session_button(self, name):
         script = f"""
         function create_button(){{
@@ -189,7 +196,9 @@ class Home(QMainWindow):
 
         document.querySelector(".contact-list").appendChild(container);
         document.querySelectorAll(".contact-item").forEach(el => el.classList.remove("active"));
-        container.classList.add("active");}}
+        container.classList.add("active"); 
+        container.click();
+        }}
         create_button();
 
         """
@@ -208,7 +217,11 @@ class Home(QMainWindow):
             if not session_path.find(".session"):
                 continue
 
-            name = session_path.replace(".session", "")
+            if session_path.endswith(".session"):
+                name = session_path[:-8] 
+            else:
+                name = session_path
+
             session_path = os.path.join(sessions_dir, session_path)
             service_Worker_path = os.path.join(session_path, "Service Worker")
             if os.path.exists(path=service_Worker_path):
@@ -229,11 +242,64 @@ class Home(QMainWindow):
             self.webviews.update({name: {"webview":webview, "page": engine } })
             self.create_session_button(name)
             self.stacked.setCurrentWidget(webview)
-        
+
+
+    def delete_session(self):
+        """Remove a sessão atual, exclui o botão da sidebar e define o próximo webview ativo."""
+
+        webview: Webview = self.stacked.currentWidget()
+        session_path = webview.page().profile().cachePath()
+
+        name_to_delete = None
+        for name, obj in self.webviews.items():
+            if obj["webview"] == webview:
+                name_to_delete = name
+                break
+
+        if not name_to_delete:
+            return
+
+        current_index = self.stacked.currentIndex()
+        total_sessions = len(self.webviews)
+
+        if total_sessions <= 1:
+            self.options_menu.removeAction(self.remove_account_action)
+            self.stacked.setCurrentIndex(0)
+        else:
+            previous_index = current_index - 1
+            if previous_index < 2:
+                previous_index = 2
+            self.stacked.setCurrentIndex(previous_index)
+
+        self.controller.setSessionTobeDelete(session_path)
+
+        if name_to_delete in self.webviews:
+            del self.webviews[name_to_delete]
+
+        script = f"""
+            {{
+                const el = document.querySelector('[webview="{name_to_delete}"]');
+                if (el) {{
+                    el.remove();
+                }}
+
+                const first = document.querySelector(".contact-item");
+                if (first) {{
+                    first.classList.add("active");
+                }}
+            }}
+        """
+
+        self.sidebar.page().runJavaScript(script)
+
+        self.stacked.removeWidget(webview)
+        webview.deleteLater()
+
+
     def closeEvent(self, event):
         """Desligar todos web engine e fechar o programa"""
         self.sidebar.page().deleteLater()
         self.settings_view.page().deleteLater()
         for key, value in self.webviews.items():
-            engine = value["page"]
+            engine:QWebEnginePage = value["page"]
             engine.deleteLater()

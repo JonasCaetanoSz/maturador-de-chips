@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QMessageBox, QMainWindow
 from PyQt5.QtCore import pyqtSlot, QObject
 from tkinter import filedialog
+import shutil
 import webbrowser
 import json
 import os
@@ -11,6 +12,23 @@ class Controller(QObject):
         self.signals = signals
         self.home = None
         self.messages_base = {"content":[], "filename": "Selecionar arquivo", "path":""}
+    
+    # Deleta sessões anteriores marcadas para exclusão (motivo: por algum motivo a sessão ainda está sendo usada quando o programa encerra não podendo ser feito por lá. essa é a melhor opção)
+    
+    with open("delete.json", "r+", encoding="utf-8") as file:
+        json_content = json.loads(file.read())
+        delete_list = json_content.get("deleteLaster", [])
+
+        for session_path in delete_list[:]:
+            shutil.rmtree(session_path)
+            delete_list.remove(session_path)
+
+        json_content["deleteLaster"] = delete_list
+
+        file.seek(0)
+        json.dump(json_content, file, indent=4, ensure_ascii=False)
+        file.truncate()
+
 
     def setHomePage(self, home):
         """Definir instancia da janela principal"""
@@ -82,8 +100,28 @@ class Controller(QObject):
 
         change_current_activate_button();
         """
+        self.home.options_menu.addAction(self.home.remove_account_action)
         for key, value in self.home.webviews.items():
             if key == name:
                 self.home.sidebar.page().runJavaScript(script)
                 self.home.stacked.setCurrentWidget(value["webview"])
                 return 
+    
+    def setSessionTobeDelete(self, session_path: str):
+        """Definir sessão para exclusão futura (quando o programa for reiniciado)"""
+        with open("delete.json", "r+", encoding="utf-8") as file:
+            content = file.read().strip()
+
+            if not content:
+                json_content = {"deleteLaster": []}
+            else:
+                try:
+                    json_content = json.loads(content)
+                except json.JSONDecodeError:
+                    json_content = {"deleteLaster": []}
+
+            json_content.setdefault("deleteLaster", []).append(session_path)
+
+            file.seek(0)
+            json.dump(json_content, file, indent=4, ensure_ascii=False)
+            file.truncate()

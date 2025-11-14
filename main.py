@@ -13,7 +13,7 @@ class SignalReceive(QtCore.QObject):
 app = QApplication(sys.argv)
 signals = SignalReceive()
 controller = Controller("12.11.2025", signals=signals)
-window = Home(controller=controller)
+window = Home(controller=controller, app=app)
 window.sidebar.page().loadStarted.connect(lambda: window.show )
 controller.setHomePage(home=window)
 

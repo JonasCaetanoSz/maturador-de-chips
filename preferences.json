@@ -1,11 +1,11 @@
 {
   "ShutdownAfterCompletion": true,
-  "PlaySound": true,
-  "ContinueIfDisconnected": true,
+  "PlaySound": false,
+  "ContinueIfDisconnected": false,
   "MinInterval": 1,
   "MaxInterval": 10,
   "LimitMessages": 10,
   "MessageType": "file",
   "ApiToken": "",
-  "seletedFilePath": ""
+  "seletedFilePath": "C:/Users/jonas/Downloads/Novo(a) Documento de Texto.txt"
 }

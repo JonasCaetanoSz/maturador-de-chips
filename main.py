@@ -14,7 +14,7 @@ app = QApplication(sys.argv)
 signals = SignalReceive()
 controller = Controller("12.11.2025", signals=signals)
 window = Home(controller=controller)
-
+window.sidebar.page().loadStarted.connect(lambda: window.show )
 controller.setHomePage(home=window)
 
 # Connectar eventos PyQt Signal

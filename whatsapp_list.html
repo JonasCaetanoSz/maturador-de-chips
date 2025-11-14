@@ -67,6 +67,10 @@
     }
 
     .contact-item:hover {
+      background-color: #32343d;
+    }
+
+    .contact-item.active {
       background-color: #44475a;
     }
 
@@ -115,12 +119,27 @@
     <div class="sidebar-header">💬 Contas Conectadas</div>
 
     <div class="contact-list">
-      <div class="contact-item"><div class="contact-icon">J</div><div class="contact-number">Exemplo teste</div></div>
+
     </div>
 
     <div class="footer">
       <a href="https://github.com/jonascaetanosz" target="_blank">Jonas Caetano • GitHub</a>
     </div>
   </div>
+
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script>
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+    controller = channel.objects.controller;
+  
+    window.change_current_webview = function change_current_webview(event){
+      webviewName = event.currentTarget.getAttribute("webview");;
+      
+      controller.change_current_webview(webviewName);
+      
+    }
+  
+  })
+  </script>
 </body>
 </html>

@@ -67,3 +67,23 @@ class Controller(QObject):
         self.messages_base["path"] = file_path
         file.close()
         return  file_path
+    
+    @pyqtSlot(str)
+    def change_current_webview(self, name):
+        """Trocar o webview de conta atual """
+        
+        self.home.sidebar.page().runJavaScript(""" document.querySelectorAll(".contact-item").forEach(el => el.classList.remove("active")); """)
+        script = f"""
+        function change_current_activate_button(){{
+        
+        const seletedButton = document.querySelector("[webview='{name}']");
+        seletedButton.classList.add("active");
+        }};
+
+        change_current_activate_button();
+        """
+        for key, value in self.home.webviews.items():
+            if key == name:
+                self.home.sidebar.page().runJavaScript(script)
+                self.home.stacked.setCurrentWidget(value["webview"])
+                return 

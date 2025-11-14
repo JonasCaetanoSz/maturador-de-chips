@@ -8,7 +8,7 @@ class SignalReceive(QtCore.QObject):
     # Fechar aba de preferencias
     close_preferences = QtCore.pyqtSignal()
 
-# Instaciar o app e classes
+# Instanciar o app e classes
 
 app = QApplication(sys.argv)
 signals = SignalReceive()

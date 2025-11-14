@@ -1,3 +1,4 @@
+import shutil
 from PyQt5 import QtWidgets
 
 from PyQt5.QtWidgets import (
@@ -35,6 +36,7 @@ class Home(QMainWindow):
         self.setGeometry(100, 100, 1200, 700)
         self.controller = controller
         self.webviews = {}
+
         # Cria o menu
         menubar = self.menuBar()
         options_menu = menubar.addMenu("Opções")
@@ -65,6 +67,7 @@ class Home(QMainWindow):
         self.sidebar.controller_channel = channel
         engine.setWebChannel(channel)
         sidebar_path = os.path.abspath("whatsapp_list.html")
+        engine.loadFinished.connect(lambda x: self.load_sessions() )
         engine.setUrl(QUrl.fromLocalFile(sidebar_path))
         self.sidebar.setPage(engine)
 
@@ -146,6 +149,7 @@ class Home(QMainWindow):
         profile.setCachePath(session_path)
         profile.setPersistentStoragePath(session_path)
         profile.setDownloadPath(session_path)
+        profile.setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
         profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
         profile.setHttpAcceptLanguage("pt-br")
         engine = LogCapturingPage(profile, webview)
@@ -191,3 +195,45 @@ class Home(QMainWindow):
         """
 
         self.sidebar.page().runJavaScript(script)
+    
+    def load_sessions(self):
+        """Carregar sessões salvas no sistema"""
+
+        sessions_dir = os.path.join( os.getcwd() , "sessions")
+        if not os.path.exists(sessions_dir):
+            os.mkdir(sessions_dir)
+
+        for session_path in os.listdir(sessions_dir):
+
+            if not session_path.find(".session"):
+                continue
+
+            name = session_path.replace(".session", "")
+            session_path = os.path.join(sessions_dir, session_path)
+            service_Worker_path = os.path.join(session_path, "Service Worker")
+            if os.path.exists(path=service_Worker_path):
+                shutil.rmtree(path=service_Worker_path)
+
+            webview = Webview(self)
+            profile = QWebEngineProfile(f"{name}", webview)
+            profile.setCachePath(session_path)
+            profile.setPersistentStoragePath(session_path)
+            profile.setDownloadPath(session_path)
+            profile.setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
+            profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
+            profile.setHttpAcceptLanguage("pt-br")
+            engine = LogCapturingPage(profile, webview)
+            webview.setPage(engine)
+            webview.load(QUrl("https://web.whatsapp.com/"))
+            self.stacked.addWidget(webview)
+            self.webviews.update({name: {"webview":webview, "page": engine } })
+            self.create_session_button(name)
+            self.stacked.setCurrentWidget(webview)
+        
+    def closeEvent(self, event):
+        """Desligar todos web engine e fechar o programa"""
+        self.sidebar.page().deleteLater()
+        self.settings_view.page().deleteLater()
+        for key, value in self.webviews.items():
+            engine = value["page"]
+            engine.deleteLater()

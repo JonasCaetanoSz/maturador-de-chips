@@ -560,7 +560,8 @@ waitForModuleSystem().then(() => {
     window.WTools = new WhatsAppTools()
     window.WTools.onReady(async() => {
     var me = await window.WTools.myProfileShortDetails();
-    SendPhoneNumber(me.phone, me.profilePic.eurl)
+    let photo = (me.profilePic.eurl === undefined ) ? '' : me.profilePic.eurl;
+    SendPhoneNumber(me.phone, photo)
 })
 
 });

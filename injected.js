@@ -523,6 +523,8 @@ class WhatsAppTools  {
 
 window.sessionName = "@instanceName";
 
+// Enviar numero de telefone e foto para o programa
+
 function SendPhoneNumber(phone, eurl) {
   const url = `/maturador/api/account-added?sessionName=${encodeURIComponent(window.sessionName)}&phone=${encodeURIComponent(phone)}&photo=${encodeURIComponent(eurl)}`;
   xhr = new XMLHttpRequest()
@@ -530,9 +532,7 @@ function SendPhoneNumber(phone, eurl) {
   xhr.send()
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+// Função que espera modulos ficarem prontos
 
 function waitForModuleSystem() {
     return new Promise(resolve => {
@@ -553,14 +553,13 @@ function waitForModuleSystem() {
 }
 
 
-  // Aguardar os modulos ficarem disponiveis
+// Aguardar os modulos ficarem disponiveis
 
 waitForModuleSystem().then(() => {
 
-    var WTools = new WhatsAppTools()
-    WTools.onReady(async() => {
-    var me = await WTools.myProfileShortDetails();
-    console.log(me);
+    window.WTools = new WhatsAppTools()
+    window.WTools.onReady(async() => {
+    var me = await window.WTools.myProfileShortDetails();
     SendPhoneNumber(me.phone, me.profilePic.eurl)
 })
 

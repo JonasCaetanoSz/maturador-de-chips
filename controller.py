@@ -154,8 +154,11 @@ class Controller(QObject):
         function setContactDisconnected(){{
         
         const contactElement = document.querySelector("[webview='{session_name}']");
-        contactElement.querySelector(".contact-number").textContent = "{session_name} (Desconectado)";
-        contactElement.querySelector(".contact-icon").src = "assets/medias/contact.jpg";
+        
+        if (contactElement){{
+            contactElement.querySelector(".contact-number").textContent = "{session_name} (Desconectado)";
+            contactElement.querySelector(".contact-icon").src = "assets/medias/contact.jpg";
+        }};
 
         }};
         

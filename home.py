@@ -312,9 +312,6 @@ class Home(QMainWindow):
 
         self.controller.setSessionTobeDelete(session_path)
 
-        if name_to_delete in self.webviews:
-            del self.webviews[name_to_delete]
-
         script = f"""
             {{
                 const el = document.querySelector('[webview="{name_to_delete}"]');
@@ -330,9 +327,9 @@ class Home(QMainWindow):
         """
 
         self.sidebar.page().runJavaScript(script)
-        
+
         self.stacked.removeWidget(webview)
-        webview.deleteLater()
+        webview.page().runJavaScript("window.WTools.logout()")
 
 
     def closeEvent(self, event):

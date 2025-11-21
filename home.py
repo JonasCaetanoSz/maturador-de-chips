@@ -2,9 +2,11 @@ import shutil
 from PyQt5 import QtWidgets
 
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QHBoxLayout, QAction, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
+    QMainWindow, QWidget,
+     QHBoxLayout, QAction, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEnginePage
+from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QIcon
@@ -14,27 +16,59 @@ import os
 from controller import Controller
 
 class Webview(QWebEngineView):
-    def __init__(self, parent: QtWidgets.QWidget | None = ...) -> None:
-        self.controller_channel:QWebChannel = None
+    def __init__(self, parent=None , session_name = "GUI", signals = None):
         super().__init__(parent)
-    
-    def reload(self) -> None:
+        self.session_name = session_name
+        self.signals = signals
+        self.loadFinished.connect(lambda _: self.inject_js_script() )
+
+    def reload(self):
         self.page().setWebChannel(self.controller_channel)
         return super().reload()
+
+    def inject_js_script(self):
+        """Injetar codigo javascript na pagina do whatsapp"""
+        if self.signals:
+            self.signals.account_blocked.emit({"sessionName": self.session_name})
+            with open("injected.js", "r", encoding="utf-8") as f:
+                self.page().runJavaScript( f.read().replace("@instanceName", self.session_name ) )
+
     
 class LogCapturingPage(QWebEnginePage):
     def consoleMessage(self, level, message, lineNumber, sourceID):
         print(message)
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
         print(message)
-    
+
+from urllib.parse import parse_qs, urlparse
+
+class RequestInterceptor(QWebEngineUrlRequestInterceptor):
+    def __init__(self, parent=None, signals=None):
+        super().__init__(parent)
+        self.signals = signals
+
+    def interceptRequest(self, info):
+        url = info.requestUrl().toString()
+
+        if "/maturador/api/account-added" in url:
+            parsed = urlparse(url)
+            params = parse_qs(parsed.query)
+
+            data = {
+                "sessionName": params.get("sessionName", [""])[0],
+                "phone": params.get("phone", [""])[0],
+                "photo": params.get("photo", [""])[0],
+            }
+
+            self.signals.new_phone_number.emit(data)
+            info.block(True)
+
 class Home(QMainWindow):
-    def __init__(self, controller:Controller, app):
+    def __init__(self, controller:Controller):
         super().__init__()
         self.setWindowTitle("Maturador de chips 2025.11.12")
         self.setWindowIcon( QIcon("assets/medias/icon.ico") )
         self.setGeometry(100, 100, 1200, 700)
-        self.app = app
         self.controller = controller
         self.webviews = {}
 
@@ -151,8 +185,10 @@ class Home(QMainWindow):
 
             break
 
-        webview = Webview(self)
+        webview = Webview(self, name, self.controller.signals)
+        interceptor = RequestInterceptor(webview, self.controller.signals)
         profile = QWebEngineProfile(f"{name}", webview)
+        profile.setUrlRequestInterceptor(interceptor)
         profile.setCachePath(session_path)
         profile.setPersistentStoragePath(session_path)
         profile.setDownloadPath(session_path)
@@ -161,9 +197,9 @@ class Home(QMainWindow):
         profile.setHttpAcceptLanguage("pt-br")
         engine = LogCapturingPage(profile, webview)
         webview.setPage(engine)
-        webview.load(QUrl("https://web.whatsapp.com/"))
+        webview.load(QUrl("https://web.whatsapp.com"))
         self.stacked.addWidget(webview)
-        self.webviews.update({name: {"webview":webview, "page": engine } })
+        self.webviews.update({name: {"webview":webview, "page": engine , "connected": False} })
         self.create_session_button(name)
         self.stacked.setCurrentWidget(webview)
 
@@ -171,36 +207,37 @@ class Home(QMainWindow):
     def create_session_button(self, name):
         script = f"""
         function create_button(){{
-        const container = document.createElement("div");
-        container.className = "contact-item";
-        container.setAttribute("webview", "{name}")
-        container.onclick = () => {{ window.change_current_webview(event) }};
-        const icon = document.createElement("div");
-        icon.className = "contact-icon";
-        icon.textContent = "{name[0].upper()}";
+            const container = document.createElement("div");
+            container.className = "contact-item";
+            container.setAttribute("webview", "{name}");
+            container.onclick = () => {{ window.change_current_webview(event) }};
 
-        const number = document.createElement("div");
-        number.className = "contact-number";
-        number.textContent = "{name} (Desconectado)";
+            const icon = document.createElement("img");
+            icon.className = "contact-icon";
+            icon.src = "assets/medias/contact.jpg";
+            icon.alt = "{name}";
 
-        container.appendChild(icon);
-        container.appendChild(number);
+            const number = document.createElement("div");
+            number.className = "contact-number";
+            number.textContent = "{name} (Desconectado)";
 
-        container.addEventListener("click", () => {{
-            document.querySelectorAll(".contact-item").forEach(el => {{
-                el.classList.remove("active");
+            container.appendChild(icon);
+            container.appendChild(number);
+
+            container.addEventListener("click", () => {{
+                document.querySelectorAll(".contact-item").forEach(el => {{
+                    el.classList.remove("active");
+                }})
+
+                container.classList.add("active");
             }});
 
-            container.classList.add("active");
-        }});
-
-        document.querySelector(".contact-list").appendChild(container);
-        document.querySelectorAll(".contact-item").forEach(el => el.classList.remove("active"));
-        container.classList.add("active"); 
-        container.click();
+            document.querySelector(".contact-list").appendChild(container);
+            document.querySelectorAll(".contact-item").forEach(el => el.classList.remove("active"));
+            container.classList.add("active"); 
+            container.click();
         }}
         create_button();
-
         """
 
         self.sidebar.page().runJavaScript(script)
@@ -227,8 +264,10 @@ class Home(QMainWindow):
             if os.path.exists(path=service_Worker_path):
                 shutil.rmtree(path=service_Worker_path)
 
-            webview = Webview(self)
+            webview = Webview(self, name, self.controller.signals)
+            interceptor = RequestInterceptor(webview, self.controller.signals)
             profile = QWebEngineProfile(f"{name}", webview)
+            profile.setUrlRequestInterceptor(interceptor)
             profile.setCachePath(session_path)
             profile.setPersistentStoragePath(session_path)
             profile.setDownloadPath(session_path)
@@ -237,9 +276,9 @@ class Home(QMainWindow):
             profile.setHttpAcceptLanguage("pt-br")
             engine = LogCapturingPage(profile, webview)
             webview.setPage(engine)
-            webview.load(QUrl("https://web.whatsapp.com/"))
+            webview.load(QUrl("https://web.whatsapp.com"))
             self.stacked.addWidget(webview)
-            self.webviews.update({name: {"webview":webview, "page": engine } })
+            self.webviews.update({name: {"webview":webview, "page": engine , "connected": False} })
             self.create_session_button(name)
             self.stacked.setCurrentWidget(webview)
 
@@ -291,7 +330,7 @@ class Home(QMainWindow):
         """
 
         self.sidebar.page().runJavaScript(script)
-
+        
         self.stacked.removeWidget(webview)
         webview.deleteLater()
 

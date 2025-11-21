@@ -7,19 +7,25 @@ import sys
 class SignalReceive(QtCore.QObject):
     # Fechar aba de preferencias
     close_preferences = QtCore.pyqtSignal()
+    # novo numero adicionado
+    new_phone_number = QtCore.pyqtSignal(dict)
+    # conta do WhatsApp bloqueada ou desconectada
+    account_blocked = QtCore.pyqtSignal(dict)
 
 # Instanciar o app e classes
 
 app = QApplication(sys.argv)
 signals = SignalReceive()
 controller = Controller("12.11.2025", signals=signals)
-window = Home(controller=controller, app=app)
+window = Home(controller=controller)
 window.sidebar.page().loadStarted.connect(lambda: window.show )
 controller.setHomePage(home=window)
 
 # Connectar eventos PyQt Signal
 
 signals.close_preferences.connect( controller.close_preferences )
+signals.new_phone_number.connect( lambda data: controller.accountAuthenticated(data) )
+signals.account_blocked.connect( lambda  data: controller.accountDisconnected(data) )
 
 # Exibir janela
 

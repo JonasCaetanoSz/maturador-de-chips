@@ -125,3 +125,42 @@ class Controller(QObject):
             file.seek(0)
             json.dump(json_content, file, indent=4, ensure_ascii=False)
             file.truncate()
+    
+    def accountAuthenticated(self, data:dict):
+        """Conta conectada leitor do evento"""
+        session_name = data["sessionName"]
+        photo = data["photo"] if data["photo"] and not data["photo"].isspace() else "assets/medias/contact.jpg"
+        script = f"""
+
+        function setContactConected(){{
+        
+        const contactElement = document.querySelector("[webview='{session_name}']");
+        contactElement.querySelector(".contact-number").textContent = "{session_name} (Conectado)";
+        contactElement.querySelector(".contact-icon").src = "{photo}";
+
+        }};
+        
+        setContactConected();
+        """
+
+        self.home.sidebar.page().runJavaScript(script)
+        print(data)
+
+    def accountDisconnected(self, data:dict):
+        """Conta desconectada leitor do evento"""
+        session_name = data["sessionName"]
+        script = f"""
+
+        function setContactDisconnected(){{
+        
+        const contactElement = document.querySelector("[webview='{session_name}']");
+        contactElement.querySelector(".contact-number").textContent = "{session_name} (Desconectado)";
+        contactElement.querySelector(".contact-icon").src = "assets/medias/contact.jpg";
+
+        }};
+        
+        setContactDisconnected();
+        """
+
+        self.home.sidebar.page().runJavaScript(script)
+        print(data)

@@ -75,7 +75,10 @@ class Home(QMainWindow):
         # Cria o menu
         menubar = self.menuBar()
         self.options_menu = menubar.addMenu("Opções")
-
+        # Ação solta na barra
+        self.action_start_maturation = QtWidgets.QAction("Iniciar", self)
+        self.action_start_maturation.triggered.connect(lambda: self.controller.signals.start_maturation.emit())
+        menubar.addAction(self.action_start_maturation)
         # Ação de configurações
         config_action = QAction("Configurações", self)
         config_action.triggered.connect(self.open_preferences)
@@ -144,10 +147,31 @@ class Home(QMainWindow):
         engine.setUrl(QUrl.fromLocalFile(settings_path))
         self.settings_view.setPage(engine)
 
+        # Página 2 (index 2): atualizações
+
+        self.status_view = Webview(self)
+        cache_dir = os.getcwd() + "/cache"
+        profile = QWebEngineProfile("cache_status_view", self.status_view)
+        profile.setCachePath(cache_dir)
+        profile.setPersistentStoragePath(cache_dir)
+        profile.setDownloadPath(cache_dir)
+        profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
+        profile.setHttpAcceptLanguage("pt-br")
+
+        engine = LogCapturingPage(profile, self.status_view)
+        channel = QWebChannel(engine)
+        channel.registerObject("controller",self.controller)
+        self.status_view.controller_channel = channel
+        engine.setWebChannel(channel)
+        status_path = os.path.abspath("status.html")
+        engine.setUrl(QUrl.fromLocalFile(status_path))
+        self.status_view.setPage(engine)
+
         # Adiciona as páginas no stacked widget
 
         self.stacked.addWidget(self.no_account_widget)  # índice 0
         self.stacked.addWidget(self.settings_view)      # índice 1
+        self.stacked.addWidget(self.status_view)      # índice 2
 
         # Adiciona sidebar e stacked widget ao layout
 
@@ -278,7 +302,7 @@ class Home(QMainWindow):
             webview.setPage(engine)
             webview.load(QUrl("https://web.whatsapp.com"))
             self.stacked.addWidget(webview)
-            self.webviews.update({name: {"webview":webview, "page": engine , "connected": False} })
+            self.webviews.update({name: {"webview":webview, "page": engine , "connected": False, "phone": None} })
             self.create_session_button(name)
             self.stacked.setCurrentWidget(webview)
 
@@ -297,6 +321,9 @@ class Home(QMainWindow):
 
         if not name_to_delete:
             return
+        
+        if name_to_delete in self.webviews:
+            del self.webviews[name_to_delete]
 
         current_index = self.stacked.currentIndex()
         total_sessions = len(self.webviews)
@@ -306,8 +333,8 @@ class Home(QMainWindow):
             self.stacked.setCurrentIndex(0)
         else:
             previous_index = current_index - 1
-            if previous_index < 2:
-                previous_index = 2
+            if previous_index < 3:
+                previous_index = 3
             self.stacked.setCurrentIndex(previous_index)
 
         self.controller.setSessionTobeDelete(session_path)

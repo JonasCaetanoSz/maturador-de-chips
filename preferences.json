@@ -1,11 +1,11 @@
 {
   "ShutdownAfterCompletion": true,
   "PlaySound": true,
-  "ContinueIfDisconnected": false,
+  "ContinueIfDisconnected": true,
   "MinInterval": 1,
   "MaxInterval": 10,
-  "LimitMessages": 20,
-  "MessageType": "file",
-  "ApiToken": "",
+  "LimitMessages": 6,
+  "MessageType": "openai",
+  "ApiToken": "111",
   "seletedFilePath": ""
 }

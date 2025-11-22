@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QMessageBox, QMainWindow
+from PyQt5.QtWidgets import QMessageBox, QMainWindow, QSystemTrayIcon
 from PyQt5.QtCore import pyqtSlot, QObject
 from tkinter import filedialog
+from PyQt5.QtGui import QIcon
+
 import shutil
 import webbrowser
 import json
@@ -10,9 +12,13 @@ class Controller(QObject):
     def __init__(self, version, signals):
         super().__init__()
         self.signals = signals
+        self.window = None
         self.home = None
-        self.messages_base = {"content":[], "filename": "Selecionar arquivo", "path":""}
-    
+        self.messages_base = {"filename": "Selecionar arquivo", "path":""}
+        self.tray = QSystemTrayIcon()
+        self.tray.setIcon(QIcon("assets/medias/icon.ico"))  # Pode ser qualquer ícone
+        self.tray.show()
+        
     # Deleta sessões anteriores marcadas para exclusão (motivo: por algum motivo a sessão ainda está sendo usada quando o programa encerra não podendo ser feito por lá. essa é a melhor opção)
     
     with open("delete.json", "r+", encoding="utf-8") as file:
@@ -81,7 +87,6 @@ class Controller(QObject):
             return None
         file.seek(0)
         self.messages_base["filename"]= file.name.split("/")[len(file.name.split("/")) - 1]
-        self.messages_base["content"]= file.readlines()
         self.messages_base["path"] = file_path
         file.close()
         return  file_path
@@ -129,6 +134,9 @@ class Controller(QObject):
     def accountAuthenticated(self, data:dict):
         """Conta conectada leitor do evento"""
         session_name = data["sessionName"]
+        phone = data["phone"]
+        self.home.webviews[session_name]["connected"] = True
+        self.home.webviews[session_name]["phone"] = phone
         photo = data["photo"] if data["photo"] and not data["photo"].isspace() else "assets/medias/contact.jpg"
         script = f"""
 
@@ -144,11 +152,12 @@ class Controller(QObject):
         """
 
         self.home.sidebar.page().runJavaScript(script)
-        print(data)
 
     def accountDisconnected(self, data:dict):
         """Conta desconectada leitor do evento"""
         session_name = data["sessionName"]
+        self.home.webviews[session_name]["phone"] = None
+        self.home.webviews[session_name]["connected"] = False
         script = f"""
 
         function setContactDisconnected(){{
@@ -166,4 +175,6 @@ class Controller(QObject):
         """
 
         self.home.sidebar.page().runJavaScript(script)
-        print(data)
+
+    def notify(self, title: str, message: str):
+        self.tray.showMessage(title, message, QIcon("assets/medias/icon.ico"))

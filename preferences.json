@@ -5,7 +5,7 @@
   "MinInterval": 1,
   "MaxInterval": 10,
   "LimitMessages": 6,
-  "MessageType": "openai",
+  "MessageType": "file",
   "ApiToken": "111",
-  "seletedFilePath": ""
+  "seletedFilePath": "C:/Users/jonas/Downloads/mensagens.txt"
 }

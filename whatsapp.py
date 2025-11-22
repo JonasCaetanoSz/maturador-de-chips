@@ -1,5 +1,8 @@
 from controller import Controller
+from datetime import datetime
+
 from openai import OpenAI
+
 from PyQt5 import QtCore
 import random
 import json
@@ -49,14 +52,12 @@ class WhatsApp(QtCore.QThread):
         self.controller.home.stacked.setCurrentIndex(2)
         super().start()
 
-    def verify_have_account_blocked(self):
+    def verify_account_blocked(self, session_name):
         stop_if_disconnected = not self.preferences.get("ContinueIfDisconnected", False)
-
-        for key, webview in self.controller.home.webviews.items():
-            if not webview.get("connected", False):
-                if stop_if_disconnected:
-                    self.signals.account_blocked.emit({"key": key})
-                    return True
+        if not self.controller.home.webviews.get(session_name)["connected"]:
+            if stop_if_disconnected:
+                return True
+            return -1
         return False
 
     def get_connected_keys(self):
@@ -67,65 +68,72 @@ class WhatsApp(QtCore.QThread):
 
     def run(self) -> None:
         limit = int(self.preferences.get("LimitMessages", 1)) + 1
-
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
 
         for _ in range(limit):
-
-            if self.verify_have_account_blocked():
-                return
-
             connected_keys = self.get_connected_keys()
-
             if len(connected_keys) < 2:
                 print("Par insuficiente.")
                 return
 
             sender_key = random.choice(connected_keys)
 
+            blocked = self.verify_account_blocked(sender_key)
+            if blocked == True:
+                self.controller.notify(f"{sender_key} foi bloqueado, parando maturação!")
+                self.controller.signals.stop_maturation.emit()
+                return
+
+            if blocked == -1:
+                if len(connected_keys) - 1 < 1:
+                    self.controller.notify(f"{sender_key} foi bloqueado, parando maturação!")
+                    self.controller.signals.stop_maturation.emit()
+                    return
+                else:
+                    self.controller.notify(f"{sender_key} foi bloqueado, maturação ainda em andamento.")
+                    time.sleep(random.randint(min_delay, max_delay))
+                    continue
+
             receiver_candidates = [k for k in connected_keys if k != sender_key]
             receiver_key = random.choice(receiver_candidates)
-
             base_pair = tuple(sorted([sender_key, receiver_key]))
 
             if base_pair not in self.conversation_histories:
                 self.conversation_histories[base_pair] = []
-
             history = self.conversation_histories[base_pair]
 
+            final_message = None
+
             if len(history) == 0:
-                first_message = "Olá, tudo bem?"
-                history.append({
-                    "author": sender_key,
-                    "content": first_message
-                })
-                print(f"{sender_key} → {first_message}")
-                time.sleep(random.randint(min_delay, max_delay))
-                continue
-
-            last_author = history[-1]["author"]
-
-            if last_author == receiver_key and self.preferences["MessageType"] == "openai":
-                messages = self.build_messages_for_openai(history, responder_key=sender_key)
-                final_message = self.generate_openai_message(self.preferences["ApiToken"], messages)
-                history.append({"author": sender_key, "content": final_message})
-                print(f"{sender_key} (IA) → {final_message}")
-                time.sleep(random.randint(min_delay, max_delay))
-                continue
-
-            if self.preferences["MessageType"] == "file":
-                final_message = random.choice(self.messages).strip()
+                final_message = "Olá, tudo bem?"
             else:
-                messages = self.build_messages_for_openai(history, responder_key=sender_key)
-                final_message = self.generate_openai_message(self.preferences["ApiToken"], messages)
+                last_author = history[-1]["author"]
+
+                if last_author == receiver_key and self.preferences["MessageType"] == "openai":
+                    messages = self.build_messages_for_openai(history, responder_key=sender_key)
+                    final_message = self.generate_openai_message(self.preferences["ApiToken"], messages)
+                elif self.preferences["MessageType"] == "file":
+                    final_message = random.choice(self.messages).strip()
+                else:
+                    messages = self.build_messages_for_openai(history, responder_key=sender_key)
+                    final_message = self.generate_openai_message(self.preferences["ApiToken"], messages)
 
             if not final_message:
+                time.sleep(random.randint(min_delay, max_delay))
                 continue
 
             history.append({"author": sender_key, "content": final_message})
-            print(f"{sender_key} → {final_message}")
 
+            time_str = datetime.now().strftime("%H:%M:%S")  # hora:minuto:segundo
+            self.controller.signals.inject_message_row.emit(
+                {
+                "sender": sender_key,
+                "receiver": receiver_key,
+                "message": final_message,
+                "time": time_str,
+            })
+            print(final_message)
             time.sleep(random.randint(min_delay, max_delay))
 
     def build_messages_for_openai(self, history, responder_key):

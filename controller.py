@@ -283,3 +283,29 @@ class Controller(QObject):
             self.tray.showMessage(title, message)
         except Exception as e:
             print(f"[Controller] erro em notify: {e}")
+
+    def inject_message_row(self, data:dict):
+        js_code = f"""
+        if (typeof injectMessageRow !== 'function') {{
+            function injectMessageRow(sender, receiver, message, time) {{
+                const tbody = document.querySelector("tbody");
+                if (!tbody) return;
+                const tr = document.createElement("tr");
+                const tdSender = document.createElement("td");
+                tdSender.textContent = sender;
+                const tdReceiver = document.createElement("td");
+                tdReceiver.textContent = receiver;
+                const tdMessage = document.createElement("td");
+                tdMessage.textContent = message;
+                const tdTime = document.createElement("td");
+                tdTime.textContent = time;
+                tr.appendChild(tdSender);
+                tr.appendChild(tdReceiver);
+                tr.appendChild(tdMessage);
+                tr.appendChild(tdTime);
+                tbody.appendChild(tr);
+            }}
+        }}
+        injectMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])});
+        """
+        self.home.status_view.page().runJavaScript(js_code)

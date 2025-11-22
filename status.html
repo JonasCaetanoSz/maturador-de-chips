@@ -158,5 +158,32 @@
       </table>
     </div>
   </main>
+
+  <script>
+  window.addMessageRow = function addMessageRow(sender, receiver, message, time) {
+    const tbody = document.querySelector("tbody");
+    const tr = document.createElement("tr");
+
+    const tdSender = document.createElement("td");
+    tdSender.textContent = sender;
+
+    const tdReceiver = document.createElement("td");
+    tdReceiver.textContent = receiver;
+
+    const tdMessage = document.createElement("td");
+    tdMessage.textContent = message;
+
+    const tdTime = document.createElement("td");
+    tdTime.textContent = time;
+
+    tr.appendChild(tdSender);
+    tr.appendChild(tdReceiver);
+    tr.appendChild(tdMessage);
+    tr.appendChild(tdTime);
+
+    tbody.appendChild(tr);
+  }
+
+  </script>
 </body>
 </html>

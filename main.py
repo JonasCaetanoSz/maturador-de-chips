@@ -14,7 +14,11 @@ class SignalReceive(QtCore.QObject):
     account_blocked = QtCore.pyqtSignal(dict)
     # iniciar maturação
     start_maturation = QtCore.pyqtSignal()
-
+    # parar maturação
+    stop_maturation = QtCore.pyqtSignal()
+    # inserir campo no table de status da maturação
+    inject_message_row =  QtCore.pyqtSignal(dict)
+    
 ripening :WhatsApp = None
 
 def start_maturation(signals, controller):
@@ -37,6 +41,7 @@ signals.close_preferences.connect( controller.close_preferences )
 signals.new_phone_number.connect( lambda data: controller.accountAuthenticated(data) )
 signals.account_blocked.connect( lambda  data: controller.accountDisconnected(data) )
 signals.start_maturation.connect(lambda: start_maturation(signals=signals, controller=controller) )
+signals.inject_message_row.connect(lambda data: controller.inject_message_row(data=data))
 
 # Exibir janela
 

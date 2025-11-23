@@ -106,7 +106,11 @@ class WhatsApp(QtCore.QThread):
             final_message = None
 
             if len(history) == 0:
-                final_message = "Olá, tudo bem?"
+                if self.preferences["MessageType"] == "file":
+                    final_message = self.messages[0].strip()  # pega a primeira mensagem do arquivo
+                else:
+                    final_message = "Olá, tudo bem?"
+
             else:
                 last_author = history[-1]["author"]
 
@@ -133,7 +137,6 @@ class WhatsApp(QtCore.QThread):
                 "message": final_message,
                 "time": time_str,
             })
-            print(final_message)
             time.sleep(random.randint(min_delay, max_delay))
 
     def build_messages_for_openai(self, history, responder_key):

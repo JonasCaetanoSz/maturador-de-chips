@@ -16,6 +16,7 @@ class Controller(QObject):
         self.window = None
         self.home = None
         self.messages_base = {"filename": "Selecionar arquivo", "path": ""}
+        self.maturation_running = False
         self.tray = QSystemTrayIcon()
         self.tray.setIcon(QIcon("assets/medias/icon.ico"))
         self.tray.show()
@@ -66,7 +67,16 @@ class Controller(QObject):
     def setHomePage(self, home):
         """Definir instancia da janela principal (Home)."""
         self.home = home
-
+    
+    def setMaturationRunning(self, running):
+        """Definir o status do maturador"""
+        self.maturation_running = running
+    
+    @pyqtSlot(result=str)
+    def getMaturationRunning(self):
+        """Pegar status do maturador"""
+        return json.dumps({"status": self.maturation_running})
+    
     @pyqtSlot()
     def close_preferences_signal(self):
         """Evento chamado pelo JS da página de preferências para fechar a aba."""
@@ -271,15 +281,19 @@ class Controller(QObject):
             try:
                 if self.home.sidebar and self.home.sidebar.page():
                     self.home.sidebar.page().runJavaScript(script)
+            
             except Exception:
                 pass
+
+            if self.maturation_running:
+                self.check_maturation_continue_on_block(sessionName=session_name)
+
         except Exception as e:
             print(f"[Controller] erro em accountDisconnected: {e}")
 
     def notify(self, title: str, message: str):
         """Mostrar notificação via bandeja."""
         try:
-            # showMessage aceita (title, message, icon_or_enum, timeout_ms) — aqui usamos apenas title/message
             self.tray.showMessage(title, message)
         except Exception as e:
             print(f"[Controller] erro em notify: {e}")
@@ -309,3 +323,29 @@ class Controller(QObject):
         injectMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])});
         """
         self.home.status_view.page().runJavaScript(js_code)
+
+    def check_maturation_continue_on_block(self, sessionName:str):
+        """Checar as configurações para parar ou continuar a maturação quando uma conta é bloqueada/desconectada"""
+
+        connected_keys = [key for key, webview in self.home.webviews.items() if webview.get("connected", False)]
+        preferences = json.load(open("preferences.json", "r", encoding="utf8"))
+
+        # Foi bloqueado e NÃO pode continuar
+
+        if not preferences["ContinueIfDisconnected"]:
+            self.notify("Maturador de chips", f"{sessionName} foi desconectado ou banido. Parando maturação!")
+            self.signals.stop_maturation.emit()
+            return True
+
+        # Pode continuar, mas agora só restaram 1 conta (insuficiente)
+
+        if len(connected_keys) <= 1:
+            self.notify("Maturador de chips",f"{sessionName} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. Parando maturação!")
+            self.signals.stop_maturation.emit()
+            return True
+
+        # Pode continuar e ainda restam contas suficientes
+
+        if len(connected_keys) >= 2:
+            self.notify("Maturador de chips", f"{sessionName} foi desconectado ou banido. Maturação ainda em andamento.")
+            return False

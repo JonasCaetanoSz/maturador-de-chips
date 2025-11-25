@@ -9,6 +9,11 @@ import json
 import os
 import time
 
+class AccountStatus:
+    OK = 0
+    BLOCKED_STOP = 1
+    BLOCKED_CONTINUE = 2
+
 class WhatsApp(QtCore.QThread):
     def __init__(self, signals: QtCore.QObject, controller: Controller):
         super().__init__()
@@ -19,16 +24,10 @@ class WhatsApp(QtCore.QThread):
         self.conversation_histories = {}
 
     def prepare(self) -> bool:
-        connected_keys = [
-            key for key, webview in self.controller.home.webviews.items()
-            if webview.get("connected", False)
-        ]
+        connected_keys = self.get_connected_keys()
 
         if len(connected_keys) < 2:
-            return self.controller.show_alert(
-                "Maturador de chips",
-                "É necessário pelo menos 2 contas conectadas para iniciar."
-            )
+            return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 2 contas conectadas para iniciar." )
 
         with open("preferences.json", "r", encoding="utf8") as f:
             self.preferences = json.load(f)
@@ -49,54 +48,38 @@ class WhatsApp(QtCore.QThread):
         if self.preferences["MessageType"] == "openai" and not self.preferences["ApiToken"]:
             return self.controller.show_alert("Maturador de chips", "Token da OpenAI não informado.")
 
+        self.controller.setMaturationRunning(True)
         self.controller.home.stacked.setCurrentIndex(2)
         super().start()
 
-    def verify_account_blocked(self, session_name):
-        stop_if_disconnected = not self.preferences.get("ContinueIfDisconnected", False)
-        if not self.controller.home.webviews.get(session_name)["connected"]:
-            if stop_if_disconnected:
-                return True
-            return -1
-        return False
-
     def get_connected_keys(self):
+        """Filtrar por webviews com status conectado"""
         return [
             key for key, wv in self.controller.home.webviews.items()
             if wv.get("connected", False)
         ]
 
     def run(self) -> None:
+        """QT
+        Qtheard de maturação"""
         limit = int(self.preferences.get("LimitMessages", 1)) + 1
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
 
         for _ in range(limit):
             connected_keys = self.get_connected_keys()
+
+            # se tiver menos de 2, encerra
             if len(connected_keys) < 2:
-                print("Par insuficiente.")
+                self.controller.signals.stop_maturation.emit()
                 return
 
             sender_key = random.choice(connected_keys)
 
-            blocked = self.verify_account_blocked(sender_key)
-            if blocked == True:
-                self.controller.notify(f"{sender_key} foi bloqueado, parando maturação!")
-                self.controller.signals.stop_maturation.emit()
-                return
-
-            if blocked == -1:
-                if len(connected_keys) - 1 < 1:
-                    self.controller.notify(f"{sender_key} foi bloqueado, parando maturação!")
-                    self.controller.signals.stop_maturation.emit()
-                    return
-                else:
-                    self.controller.notify(f"{sender_key} foi bloqueado, maturação ainda em andamento.")
-                    time.sleep(random.randint(min_delay, max_delay))
-                    continue
-
             receiver_candidates = [k for k in connected_keys if k != sender_key]
+
             receiver_key = random.choice(receiver_candidates)
+
             base_pair = tuple(sorted([sender_key, receiver_key]))
 
             if base_pair not in self.conversation_histories:

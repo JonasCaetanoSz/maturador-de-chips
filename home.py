@@ -44,6 +44,7 @@ class Webview(QWebEngineView):
 
     def inject_js_script(self, ok):
         """Injetar código javascript na página do whatsapp — somente se estiver em web.whatsapp.com"""
+        self.signals.account_blocked.emit({"sessionName": self.session_name})
         if not ok:
             return
 
@@ -309,7 +310,6 @@ class Home(QMainWindow):
             const container = document.createElement("div");
             container.className = "contact-item";
             container.setAttribute("webview", "{name}");
-            container.onclick = () => {{ window.change_current_webview(event) }};
 
             const icon = document.createElement("img");
             icon.className = "contact-icon";
@@ -323,20 +323,19 @@ class Home(QMainWindow):
             container.appendChild(icon);
             container.appendChild(number);
 
-            container.addEventListener("click", () => {{
-                document.querySelectorAll(".contact-item").forEach(el => {{
-                    el.classList.remove("active");
-                }})
-                container.classList.add("active");
-            }});
+            container.onclick = (event) => {{
+                window.change_current_webview(event);
+            }};
 
             document.querySelector(".contact-list").appendChild(container);
-            document.querySelectorAll(".contact-item").forEach(el => el.classList.remove("active"));
-            container.classList.add("active"); 
-            container.click();
+
+            // Cria um objeto evento "fake" para ativar o botão via função
+            const fakeEvent = {{ currentTarget: container }};
+            window.change_current_webview(fakeEvent);
         }}
         create_button();
         """
+
         # Protege a chamada para evitar exceções se sidebar.page() sumiu
         try:
             if self.sidebar and self.sidebar.page():

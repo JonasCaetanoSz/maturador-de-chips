@@ -132,12 +132,29 @@
     new QWebChannel(qt.webChannelTransport, function (channel) {
     controller = channel.objects.controller;
   
-    window.change_current_webview = function change_current_webview(event){
-      webviewName = event.currentTarget.getAttribute("webview");;
-      
+window.change_current_webview = function change_current_webview(event){
+  const container = event.currentTarget;
+  const webviewName = container.getAttribute("webview");
+
+  controller.getMaturationRunning().then(status => {
+
+    let running = JSON.parse(status)["status"];
+  
+    if (!running) {
+
       controller.change_current_webview(webviewName);
-      
+
+      const allButtons = document.querySelectorAll('.contact-item');
+      const container = event.currentTarget;
+      allButtons.forEach(btn => btn.classList.remove('active'));
+      container.classList.add('active');
+    } else {
+      console.log("[AVISO] troca de webview solicitada mas maturador está rodando");
+
     }
+  });
+}
+
   
   })
   </script>

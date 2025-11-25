@@ -60,8 +60,7 @@ class WhatsApp(QtCore.QThread):
         ]
 
     def run(self) -> None:
-        """QT
-        Qtheard de maturação"""
+        """Qtheard de maturação"""
         limit = int(self.preferences.get("LimitMessages", 1)) + 1
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
@@ -148,3 +147,6 @@ class WhatsApp(QtCore.QThread):
         except Exception as e:
             self.controller.notify("Erro OpenAI", str(e))
             return None
+    
+    def stop(self):
+        super().terminate()

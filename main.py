@@ -22,7 +22,8 @@ class SignalReceive(QtCore.QObject):
 ripening :WhatsApp = None
 
 def start_maturation(signals, controller):
-    global ripening
+    global ripening, window
+    window.status_view.reload()
     ripening = WhatsApp(signals=signals, controller=controller)
     ripening.prepare()
 
@@ -42,6 +43,7 @@ signals.new_phone_number.connect( lambda data: controller.accountAuthenticated(d
 signals.account_blocked.connect( lambda  data: controller.accountDisconnected(data) )
 signals.start_maturation.connect(lambda: start_maturation(signals=signals, controller=controller) )
 signals.inject_message_row.connect(lambda data: controller.inject_message_row(data=data))
+signals.stop_maturation.connect(lambda: controller.stop_maturation(whatsapp=ripening) )
 
 # Exibir janela
 

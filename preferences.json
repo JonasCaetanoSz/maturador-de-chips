@@ -4,7 +4,7 @@
   "ContinueIfDisconnected": true,
   "MinInterval": 1,
   "MaxInterval": 10,
-  "LimitMessages": 24,
+  "LimitMessages": 4,
   "MessageType": "file",
   "ApiToken": "",
   "seletedFilePath": "C:/Users/jonas/Downloads/mensagens.txt"

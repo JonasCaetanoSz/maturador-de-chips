@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QMessageBox, QSystemTrayIcon
 from PyQt5.QtCore import pyqtSlot, QObject
 from PyQt5.QtGui import QIcon
 from tkinter import filedialog
-
+from threading import Thread
 
 class Controller(QObject):
     def __init__(self, version: str, signals):
@@ -206,6 +206,25 @@ class Controller(QObject):
         except Exception as e:
             print(f"[Controller] erro em change_current_webview: {e}")
 
+    @pyqtSlot()
+    def ask_stop_maturation(self):
+        try:
+            button = QMessageBox.question(
+                self.home,
+                "Maturador de chips",
+                "você tem certeza que quer parar o maturador?",
+                QMessageBox.StandardButton.Apply,
+                QMessageBox.StandardButton.Abort
+            )
+
+            if button == QMessageBox.StandardButton.Abort:
+                return
+            
+            self.signals.stop_maturation.emit()
+
+        except Exception as e:
+            print("Erro mostrar opção de parar maturador...")
+            
     def setSessionTobeDelete(self, session_path: str):
         """Adicionar sessão ao arquivo delete.json para remoção no próximo start."""
         try:
@@ -299,28 +318,8 @@ class Controller(QObject):
             print(f"[Controller] erro em notify: {e}")
 
     def inject_message_row(self, data:dict):
-        js_code = f"""
-        if (typeof injectMessageRow !== 'function') {{
-            function injectMessageRow(sender, receiver, message, time) {{
-                const tbody = document.querySelector("tbody");
-                if (!tbody) return;
-                const tr = document.createElement("tr");
-                const tdSender = document.createElement("td");
-                tdSender.textContent = sender;
-                const tdReceiver = document.createElement("td");
-                tdReceiver.textContent = receiver;
-                const tdMessage = document.createElement("td");
-                tdMessage.textContent = message;
-                const tdTime = document.createElement("td");
-                tdTime.textContent = time;
-                tr.appendChild(tdSender);
-                tr.appendChild(tdReceiver);
-                tr.appendChild(tdMessage);
-                tr.appendChild(tdTime);
-                tbody.appendChild(tr);
-            }}
-        }}
-        injectMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])});
+        js_code = f""" 
+        window.addMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])});
         """
         self.home.status_view.page().runJavaScript(js_code)
 
@@ -349,3 +348,8 @@ class Controller(QObject):
         if len(connected_keys) >= 2:
             self.notify("Maturador de chips", f"{sessionName} foi desconectado ou banido. Maturação ainda em andamento.")
             return False
+    
+    def stop_maturation(self, whatsapp):
+        Thread(target=whatsapp.stop() if whatsapp else None, daemon=True).start()
+        self.setMaturationRunning(False)
+        self.home.close_status()

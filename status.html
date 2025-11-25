@@ -6,7 +6,6 @@
   <title>Mensagens — JonasCaetano Dashboard</title>
 
   <style>
-    /* Estilo base */
     html, body {
       height: 100%;
       margin: 0;
@@ -17,12 +16,11 @@
       zoom: 90%;
       overflow-x: hidden;
       scroll-behavior: smooth;
-      overflow-y: scroll; /* sempre mostra barra */
+      overflow-y: scroll;
       scrollbar-width: thin;
       scrollbar-color: #b99c78 #f9f6f1;
     }
 
-    /* Scrollbar WebKit para html e body */
     html::-webkit-scrollbar,
     body::-webkit-scrollbar {
       width: 8px;
@@ -39,15 +37,12 @@
     body::-webkit-scrollbar-thumb {
       background-color: #b99c78;
       border-radius: 10px;
-      box-shadow: 0 0 8px rgba(185,156,120,0.6);
-      transition: background-color 0.3s ease;
       border: 2px solid #f9f6f1;
     }
 
     html::-webkit-scrollbar-thumb:hover,
     body::-webkit-scrollbar-thumb:hover {
       background-color: #a17945;
-      box-shadow: 0 0 10px rgba(161,121,69,0.8);
     }
 
     main {
@@ -62,7 +57,6 @@
       margin-bottom: 25px;
     }
 
-    /* Container da tabela */
     .table-container {
       background: #fff;
       border: 1px solid #cbb7a0;
@@ -72,28 +66,19 @@
       overflow-y: auto;
       box-shadow: 0 3px 8px rgba(0,0,0,0.08);
       margin-bottom: 15px;
-      scroll-behavior: smooth;
     }
 
-    /* Scrollbar WebKit para tabela */
-    .table-container::-webkit-scrollbar {
-      width: 10px;
-    }
-
+    .table-container::-webkit-scrollbar { width: 10px; }
     .table-container::-webkit-scrollbar-track {
       background: #f5f2ed;
       border-radius: 12px;
     }
-
     .table-container::-webkit-scrollbar-thumb {
       background-color: #cbb7a0;
       border-radius: 12px;
       border: 2px solid #f5f2ed;
     }
-
-    .table-container::-webkit-scrollbar-thumb:hover {
-      background-color: #a06b45;
-    }
+    .table-container::-webkit-scrollbar-thumb:hover { background-color: #a06b45; }
 
     table {
       width: 100%;
@@ -107,13 +92,10 @@
       background: #d8c1aa;
       color: #3b2f2f;
       padding: 12px;
-      font-weight: 600;
       border-bottom: 2px solid #bfa48a;
       z-index: 10;
       text-align: left;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     tbody td {
@@ -128,16 +110,42 @@
     tbody td:nth-child(3) {
       white-space: normal;
       overflow-wrap: break-word;
-      text-overflow: clip;
     }
 
-    tr:hover {
-      background-color: #f3e7de;
+    tr:hover { background-color: #f3e7de; }
+
+    .close-btn {
+      position: fixed;
+      top: 20px;
+      right: 25px;
+      background-color: transparent;
+      border: 2px solid #8b4513;
+      color: #8b4513;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      text-align: center;
+      line-height: 30px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+      z-index: 1000;
     }
+
+    .close-btn:hover {
+      background-color: #8b4513;
+      color: #fff;
+      transform: scale(1.05);
+    }
+
   </style>
 </head>
 
 <body>
+
+  <button class="close-btn" title="Parar maturação">×</button>
+
   <main>
     <h2>📨 Histórico de Mensagens</h2>
 
@@ -152,37 +160,48 @@
           </tr>
         </thead>
 
-        <tbody>
-          
-        </tbody>
+        <tbody></tbody>
       </table>
     </div>
   </main>
 
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
   <script>
-  window.addMessageRow = function addMessageRow(sender, receiver, message, time) {
-    const tbody = document.querySelector("tbody");
-    const tr = document.createElement("tr");
 
-    const tdSender = document.createElement("td");
-    tdSender.textContent = sender;
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+    controller = channel.objects.controller;
 
-    const tdReceiver = document.createElement("td");
-    tdReceiver.textContent = receiver;
+    document.querySelector(".close-btn").addEventListener("click", () => {
+      controller.ask_stop_maturation()
+    });
+  
+  });
 
-    const tdMessage = document.createElement("td");
-    tdMessage.textContent = message;
+    // Função para adicionar linha na tabela
 
-    const tdTime = document.createElement("td");
-    tdTime.textContent = time;
+    window.addMessageRow = function addMessageRow(sender, receiver, message, time) {
+      const tbody = document.querySelector("tbody");
+      const tr = document.createElement("tr");
 
-    tr.appendChild(tdSender);
-    tr.appendChild(tdReceiver);
-    tr.appendChild(tdMessage);
-    tr.appendChild(tdTime);
+      const tdSender = document.createElement("td");
+      tdSender.textContent = sender;
 
-    tbody.appendChild(tr);
-  }
+      const tdReceiver = document.createElement("td");
+      tdReceiver.textContent = receiver;
+
+      const tdMessage = document.createElement("td");
+      tdMessage.textContent = message;
+
+      const tdTime = document.createElement("td");
+      tdTime.textContent = time;
+
+      tr.appendChild(tdSender);
+      tr.appendChild(tdReceiver);
+      tr.appendChild(tdMessage);
+      tr.appendChild(tdTime);
+
+      tbody.appendChild(tr);
+    };
 
   </script>
 </body>

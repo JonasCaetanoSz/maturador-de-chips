@@ -1,3 +1,4 @@
+import json
 import shutil
 import os
 from urllib.parse import parse_qs, urlparse
@@ -18,16 +19,20 @@ from controller import Controller
 
 class Webview(QWebEngineView):
     def __init__(self, parent=None, session_name="GUI", signals=None, inject_js=False):
-        """
-        inject_js: quando True, a Webview tentará injetar injected.js (apenas para instâncias
-                   que carregam o web.whatsapp.com).
-        """
         super().__init__(parent)
         self.session_name = session_name
         self.signals = signals
         self.inject_js_enabled = bool(inject_js)
 
-        # Só conectar loadFinished quando precisamos executar algo pós-load (como injetar JS).
+        if self.inject_js_enabled:
+            self.loadFinished.connect(lambda ok: self.disable_menu_options(whatsapp=True))
+        else:
+            self.loadFinished.connect(lambda ok: self.disable_menu_options(whatsapp=False))
+        
+        self.loadFinished.connect(lambda ok: self.apply_preferences_sound())
+
+        # conectar loadFinished para injetar JS 
+
         if self.inject_js_enabled:
             self.loadFinished.connect(lambda ok: self.inject_js_script(ok))
 
@@ -52,9 +57,11 @@ class Webview(QWebEngineView):
             page = self.page()
             if page is None:
                 return
+    
+            # Só injetar quando realmente for o WhatsApp Web
 
             url = page.url().toString()
-            # Só injetar quando realmente for o WhatsApp Web
+
             if "web.whatsapp.com" not in url:
                 return
 
@@ -64,8 +71,7 @@ class Webview(QWebEngineView):
                 print(f"[Webview:{self.session_name}] injected.js não encontrado em {injected_path}")
                 return
 
-            # Lê e injeta JS. Não emitimos sinais de bloqueio automaticamente — o JS é que deve
-            # avisar via channel se detectar conta bloqueada.
+            # Lê e injeta JS
             with open(injected_path, "r", encoding="utf-8") as f:
                 script = f.read().replace("@instanceName", self.session_name)
 
@@ -79,6 +85,38 @@ class Webview(QWebEngineView):
             # Log útil para dev
             print(f"[Webview:{self.session_name}] erro ao injetar JS: {e}")
 
+    def apply_preferences_sound(self):
+        """Aplica configurações de som e notificação webview"""
+
+        with open("preferences.json", "r", encoding="utf8") as f:
+            preferences = json.load(f)
+            play_sound = preferences["PlaySound"]
+
+        # Som
+
+        self.page().setFeaturePermission(
+                self.page().url(),
+                QWebEnginePage.Feature.Notifications,
+                QWebEnginePage.PermissionPolicy.PermissionGrantedByUser
+        )
+        self.page().setAudioMuted(not play_sound)
+    
+    def disable_menu_options(self, whatsapp):
+        """Desativar opções do menu"""
+        if not whatsapp:
+            self.page().action(QWebEnginePage.Reload).setVisible(False)
+        self.page().action(QWebEnginePage.Back).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.SavePage).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.CopyImageToClipboard).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.CopyImageUrlToClipboard).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.Forward).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.ViewSource).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.CopyLinkToClipboard).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.OpenLinkInNewTab).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.OpenLinkInThisWindow).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.DownloadLinkToDisk).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.OpenLinkInNewBackgroundTab).setVisible(False)
+        self.page().action(QWebEnginePage.WebAction.OpenLinkInNewWindow).setVisible(False)
 
 class LogCapturingPage(QWebEnginePage):
     # Qt pode chamar consoleMessage ou javaScriptConsoleMessage dependendo da versão

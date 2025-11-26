@@ -1,10 +1,10 @@
 {
-  "ShutdownAfterCompletion": true,
+  "ShutdownAfterCompletion": false,
   "PlaySound": true,
   "ContinueIfDisconnected": true,
   "MinInterval": 1,
   "MaxInterval": 10,
-  "LimitMessages": 4,
+  "LimitMessages": 2,
   "MessageType": "file",
   "ApiToken": "",
   "seletedFilePath": "C:/Users/jonas/Downloads/mensagens.txt"

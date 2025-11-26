@@ -61,7 +61,7 @@ class WhatsApp(QtCore.QThread):
 
     def run(self) -> None:
         """Qtheard de maturação"""
-        limit = int(self.preferences.get("LimitMessages", 1)) + 1
+        limit = int(self.preferences.get("LimitMessages", 1))
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
 
@@ -107,10 +107,22 @@ class WhatsApp(QtCore.QThread):
 
             if not final_message:
                 time.sleep(random.randint(min_delay, max_delay))
+                print("dormindo")
                 continue
 
-            history.append({"author": sender_key, "content": final_message})
+            sender_webview = self.controller.home.webviews[sender_key]["webview"]
+            receiver_phone = self.controller.home.webviews[receiver_key]["phone"]
 
+            js_code = f"""
+                (async () => {{
+                    const user = await window.WTools.GetUser("{receiver_phone}");       
+                    const chat = await user.getChat();
+                    await chat.sendMessage("{final_message}");
+                }})();
+            """
+
+
+            history.append({"author": sender_key, "content": final_message})
             time_str = datetime.now().strftime("%H:%M:%S")  # hora:minuto:segundo
             self.controller.signals.inject_message_row.emit(
                 {
@@ -119,9 +131,19 @@ class WhatsApp(QtCore.QThread):
                 "message": final_message,
                 "time": time_str,
             })
+
+            sender_webview.page().runJavaScript(js_code)
             time.sleep(random.randint(min_delay, max_delay))
+        
+        # Fim
+        if self.preferences["ShutdownAfterCompletion"]:
+            os.system("shutdown /s /t 30")
+        
+        self.controller.notify("Maturador de chips", "maturação concluída com sucesso!")
+        self.controller.signals.stop_maturation.emit()
 
     def build_messages_for_openai(self, history, responder_key):
+        """Monta o array de mensagens no formato da OpenAI."""
         messages = [
             {
                 "role": "system",
@@ -136,6 +158,7 @@ class WhatsApp(QtCore.QThread):
         return messages
 
     def generate_openai_message(self, api_key, messages):
+        """Gerar mensagem com openAI"""
         try:
             client = OpenAI(api_key=api_key)
             response = client.chat.completions.create(
@@ -149,4 +172,5 @@ class WhatsApp(QtCore.QThread):
             return None
     
     def stop(self):
+        """Parar Qtheard de maturação"""
         super().terminate()

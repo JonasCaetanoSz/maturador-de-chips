@@ -117,6 +117,11 @@ class Controller(QObject):
                 json.dump(json_data, file, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"[Controller] erro ao escrever preferences.json: {e}")
+        
+        # Aplica as novas configurações em todos webview
+        for key, wv in self.home.webviews.items():
+            webview = wv["webview"]
+            webview.apply_preferences_sound()
 
     @pyqtSlot(str, str)
     def show_alert(self, title: str, message: str):

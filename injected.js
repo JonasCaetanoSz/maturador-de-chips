@@ -260,7 +260,7 @@ class Chat {
 
     const msgStatus = window.require('WAWebSendMsgChatAction').addAndSendMsgToChat(this._model, message);
     window.require('WAWebStreamModel').Stream.markAvailable();
-    window.require('WAWebUpdateUnreadChatAction').sendSeen(chat);
+    window.require('WAWebUpdateUnreadChatAction').sendSeen(this._model);
     window.require('WAWebStreamModel').Stream.markUnavailable()
     const senderStatus = await msgStatus[1];
         

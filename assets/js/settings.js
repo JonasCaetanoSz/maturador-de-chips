@@ -35,8 +35,8 @@
     // Se for arquivo
     if (preferences.MessageType ===  "file") {
       const fileNameSpan = document.getElementById("fileName");
-      if (fileNameSpan && preferences.FilePath)
-        fileNameSpan.textContent = "Arquivo atual: " + preferences.FilePath.split("\\").pop();
+      if (fileNameSpan && preferences.SelectedFilePath )
+        fileNameSpan.textContent = "Arquivo atual: " + preferences.SelectedFilePath .split("\\").pop();
     }
   }).catch(err => {
     console.error("Erro ao carregar configurações:", err);

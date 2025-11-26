@@ -4,8 +4,11 @@
       controller.close_preferences_signal();
     })
 
+  var currentFilePath = "";
+
   controller.get_user_configs().then(configs => {
     const preferences = JSON.parse(configs);
+    currentFilePath = preferences.SelectedFilePath || "";
 
     //  Checkboxes 
     document.getElementById("shutdown").checked = preferences.ShutdownAfterCompletion;
@@ -36,7 +39,7 @@
     if (preferences.MessageType ===  "file") {
       const fileNameSpan = document.getElementById("fileName");
       if (fileNameSpan && preferences.SelectedFilePath )
-        fileNameSpan.textContent = "Arquivo atual: " + preferences.SelectedFilePath .split("\\").pop();
+        fileNameSpan.textContent = "Arquivo atual: " + preferences.SelectedFilePath.split("\\").pop();
     }
   }).catch(err => {
     console.error("Erro ao carregar configurações:", err);
@@ -44,6 +47,15 @@
   // Atualizar configurações
 
   document.querySelector("#saveBtn").addEventListener("click", () => {
+    const fileNameSpan = document.getElementById("fileName");
+
+    // Se o usuário mudou o arquivo no front, atualiza currentFilePath
+    if (fileNameSpan && fileNameSpan.textContent.includes(":")) {
+        const full = fileNameSpan.textContent.split(":").pop().trim();
+        // ← Aqui deve ser o caminho completo, NÃO apenas o nome!
+        currentFilePath = full;
+    }
+    
     const shutdown = document.querySelector("#shutdown").checked;
     const sound = document.querySelector("#sound").checked;
     const continue_ = document.querySelector("#continue").checked;
@@ -94,7 +106,8 @@
       MaxInterval: maxInterval,
       LimitMessages: limitMessages,
       MessageType: msgSelect,
-      ApiToken: apiToken
+      ApiToken: apiToken,
+      SelectedFilePath: currentFilePath
     };
 
     // Envia para backend

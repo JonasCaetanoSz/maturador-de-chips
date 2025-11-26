@@ -107,11 +107,13 @@ class Controller(QObject):
         """Atualiza preferences.json com o conteúdo recebido do JS, acrescentando o caminho do arquivo selecionado."""
         try:
             json_data = json.loads(new_configs) if new_configs else {}
+            # Se o JS enviou um caminho novo, usa ele — SENÃO mantém o antigo
+            existing = self.messages_base.get("path", "")
+            new_path = json_data.get("SelectedFilePath") or existing
+            json_data["SelectedFilePath"] = new_path
+
         except json.JSONDecodeError:
             json_data = {}
-
-        # garante a chave seleciona e atualiza
-        json_data.update({"seletedFilePath": self.messages_base.get("path", "")})
         try:
             with open("preferences.json", "w", encoding="utf-8") as file:
                 json.dump(json_data, file, indent=2, ensure_ascii=False)

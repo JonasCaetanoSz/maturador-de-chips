@@ -3,16 +3,12 @@ from datetime import datetime
 
 from openai import OpenAI
 
-from PyQt5 import QtCore
+from PyQt6 import QtCore
 import random
 import json
+import subprocess
 import os
 import time
-
-class AccountStatus:
-    OK = 0
-    BLOCKED_STOP = 1
-    BLOCKED_CONTINUE = 2
 
 class WhatsApp(QtCore.QThread):
     def __init__(self, signals: QtCore.QObject, controller: Controller):
@@ -33,13 +29,13 @@ class WhatsApp(QtCore.QThread):
             self.preferences = json.load(f)
 
         if self.preferences["MessageType"] == "file":
-            if not self.preferences["seletedFilePath"]:
+            if not self.preferences["selectedFilePath"]:
                 return self.controller.show_alert("Maturador de chips", "Nenhum arquivo de mensagens selecionado.")
 
-            if not os.path.exists(self.preferences["seletedFilePath"]):
+            if not os.path.exists(self.preferences["selectedFilePath"]):
                 return self.controller.show_alert("Maturador de chips", "Arquivo de mensagens não existe.")
 
-            with open(self.preferences["seletedFilePath"], "r", encoding="utf-8") as mf:
+            with open(self.preferences["selectedFilePath"], "r", encoding="utf-8") as mf:
                 self.messages = mf.readlines()
 
             if not self.messages:
@@ -110,20 +106,11 @@ class WhatsApp(QtCore.QThread):
                 print("dormindo")
                 continue
 
-            sender_webview = self.controller.home.webviews[sender_key]["webview"]
             receiver_phone = self.controller.home.webviews[receiver_key]["phone"]
-
-            js_code = f"""
-                (async () => {{
-                    const user = await window.WTools.GetUser("{receiver_phone}");       
-                    const chat = await user.getChat();
-                    await chat.sendMessage("{final_message}");
-                }})();
-            """
-
 
             history.append({"author": sender_key, "content": final_message})
             time_str = datetime.now().strftime("%H:%M:%S")  # hora:minuto:segundo
+            
             self.controller.signals.inject_message_row.emit(
                 {
                 "sender": sender_key,
@@ -131,14 +118,15 @@ class WhatsApp(QtCore.QThread):
                 "message": final_message,
                 "time": time_str,
             })
-
-            sender_webview.page().runJavaScript(js_code)
+            
+            self.controller.signals.send_whatsapp_text_message.emit({"final_message": final_message, "receiver_phone": receiver_phone, "sender_key": sender_key})
             time.sleep(random.randint(min_delay, max_delay))
         
         # Fim
+
         if self.preferences["ShutdownAfterCompletion"]:
-            os.system("shutdown /s /t 30")
-        
+            subprocess.run(["shutdown", "/s", "/t", "30"])
+
         self.controller.notify("Maturador de chips", "maturação concluída com sucesso!")
         self.controller.signals.stop_maturation.emit()
 

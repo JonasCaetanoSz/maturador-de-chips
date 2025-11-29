@@ -1,49 +1,53 @@
-    // Ação de fechar pagina
+   // Ação de fechar pagina
 
     document.querySelector(".close-btn").addEventListener("click", () => {
-      controller.close_preferences_signal();
+      window.controller.close_preferences_signal();
     })
 
   var currentFilePath = "";
 
-  controller.get_user_configs().then(configs => {
-    const preferences = JSON.parse(configs);
-    currentFilePath = preferences.SelectedFilePath || "";
+      // Obter configurações do usuario
+    window.controller.get_user_configs().then(configs => {
 
-    //  Checkboxes 
-    document.getElementById("shutdown").checked = preferences.ShutdownAfterCompletion;
-    document.getElementById("sound").checked = preferences.PlaySound;
-    document.getElementById("continue").checked = preferences.ContinueIfDisconnected;
+      const preferences = JSON.parse(configs);
+      currentFilePath = preferences.selectedFilePath || "";
 
-    //  Intervalos 
-    document.getElementById("minInterval").value = preferences.MinInterval;
-    document.getElementById("maxInterval").value = preferences.MaxInterval;
+      //  Checkboxes 
+      document.getElementById("shutdown").checked = preferences.ShutdownAfterCompletion;
+      document.getElementById("sound").checked = preferences.PlaySound;
+      document.getElementById("continue").checked = preferences.ContinueIfDisconnected;
 
-    //  Limite de mensagens 
-    document.getElementById("limitMessages").value = preferences.LimitMessages;
+      //  Intervalos 
+      document.getElementById("minInterval").value = preferences.MinInterval;
+      document.getElementById("maxInterval").value = preferences.MaxInterval;
 
-    //  Fonte de mensagens 
-    const select = document.getElementById("msgSelect");
-    select.value = preferences.MessageType;
+      //  Limite de mensagens 
+      document.getElementById("limitMessages").value = preferences.LimitMessages;
 
-    // Atualiza o campo extra conforme a seleção
-    updateExtraOption();
+      //  Fonte de mensagens 
+      const select = document.getElementById("msgSelect");
+      select.value = preferences.MessageType;
 
-    // Se for OpenAI
-    if (preferences.MessageType  == "openai") {
-      const apiTokenInput = document.getElementById("apiToken");
-      if (apiTokenInput) apiTokenInput.value = preferences.ApiToken;
-    }
+      // Atualiza o campo extra conforme a seleção
+      updateExtraOption();
 
-    // Se for arquivo
-    if (preferences.MessageType ===  "file") {
-      const fileNameSpan = document.getElementById("fileName");
-      if (fileNameSpan && preferences.SelectedFilePath )
-        fileNameSpan.textContent = "Arquivo atual: " + preferences.SelectedFilePath.split("\\").pop();
-    }
-  }).catch(err => {
-    console.error("Erro ao carregar configurações:", err);
-  });
+      // Se for OpenAI
+      if (preferences.MessageType  == "openai") {
+        const apiTokenInput = document.getElementById("apiToken");
+        if (apiTokenInput) apiTokenInput.value = preferences.ApiToken;
+      }
+
+      // Se for arquivo
+      if (preferences.MessageType ===  "file") {
+        const fileNameSpan = document.getElementById("fileName");
+        if (fileNameSpan && preferences.selectedFilePath )
+          fileNameSpan.textContent = "Arquivo atual: " + preferences.selectedFilePath.split("\\").pop();
+      }
+    }).catch(err => {
+      console.error("Erro ao carregar configurações:", err);
+    });
+    
+  
   // Atualizar configurações
 
   document.querySelector("#saveBtn").addEventListener("click", () => {
@@ -78,7 +82,7 @@
       !limitMessages ||
       limitMessages <= 0
     ) {
-      controller.show_alert(
+      window.controller.show_alert(
         "Maturador de chips",
         "Erro ao cadastrar novas configurações, verifique os dados informados e tente novamente."
       );
@@ -89,7 +93,7 @@
 
     const needToken = ["openai"].includes(msgSelect);
     if (needToken && apiToken === "") {
-      controller.show_alert(
+      window.controller.show_alert(
         "Maturador de chips",
         "O método selecionado requer um token de API. Por favor, preencha o campo correspondente."
       );
@@ -107,17 +111,17 @@
       LimitMessages: limitMessages,
       MessageType: msgSelect,
       ApiToken: apiToken,
-      SelectedFilePath: currentFilePath
+      selectedFilePath: currentFilePath
     };
 
     // Envia para backend
     
-    controller.update_user_configs(JSON.stringify(preferences))
+    window.controller.update_user_configs(JSON.stringify(preferences))
       .then(() => {
-        controller.show_alert("Maturador de chips", "Configurações salvas com sucesso!");
+        window.controller.show_alert("Maturador de chips", "Configurações salvas com sucesso!");
       })
       .catch(err => {
         console.error("Erro ao salvar configurações:", err);
-        controller.show_alert("Maturador de chips", "Erro ao salvar configurações. Verifique o arquivo de log para mais detalhes.");
+        window.controller.show_alert("Maturador de chips", "Erro ao salvar configurações. Verifique o arquivo de log para mais detalhes.");
       });
 });

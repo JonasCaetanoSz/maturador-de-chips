@@ -3,16 +3,24 @@ import shutil
 import os
 from urllib.parse import parse_qs, urlparse
 
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import (
     QMainWindow, QWidget,
-    QHBoxLayout, QAction, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
+    QHBoxLayout, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
 )
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEnginePage
-from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PyQt5.QtWebChannel import QWebChannel
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QIcon
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import (
+    QWebEnginePage,
+    QWebEngineProfile,
+    QWebEngineSettings,
+    QWebEngineUrlRequestInterceptor
+)
+
+from PyQt6.QtGui import QAction
+from PyQt6.QtWebEngineCore import QWebEngineUrlRequestInterceptor
+from PyQt6.QtWebChannel import QWebChannel
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QIcon
 
 from controller import Controller
 
@@ -100,12 +108,16 @@ class Webview(QWebEngineView):
                 QWebEnginePage.PermissionPolicy.PermissionGrantedByUser
         )
         self.page().setAudioMuted(not play_sound)
-    
+
     def disable_menu_options(self, whatsapp):
         """Desativar opções do menu"""
+
+        # Ajuste extra quando não for WhatsApp
         if not whatsapp:
-            self.page().action(QWebEnginePage.Reload).setVisible(False)
-        self.page().action(QWebEnginePage.Back).setVisible(False)
+            self.page().action(QWebEnginePage.WebAction.Reload).setVisible(False)
+        
+        self.settings().setAttribute( QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
+        self.page().action(QWebEnginePage.WebAction.Back).setVisible(False)
         self.page().action(QWebEnginePage.WebAction.SavePage).setVisible(False)
         self.page().action(QWebEnginePage.WebAction.CopyImageToClipboard).setVisible(False)
         self.page().action(QWebEnginePage.WebAction.CopyImageUrlToClipboard).setVisible(False)
@@ -168,7 +180,7 @@ class Home(QMainWindow):
         menubar = self.menuBar()
         self.options_menu = menubar.addMenu("Opções")
         # Ação solta na barra
-        self.action_start_maturation = QtWidgets.QAction("Iniciar", self)
+        self.action_start_maturation = QAction("Iniciar", self)
         # note: emitir diretamente no controller.signals
         self.action_start_maturation.triggered.connect(lambda: self.controller.signals.start_maturation.emit())
         menubar.addAction(self.action_start_maturation)
@@ -213,7 +225,7 @@ class Home(QMainWindow):
         # Página 0 (index 0): Nenhuma conta conectada
         self.no_account_widget = QWidget()
         self.no_account_layout = QVBoxLayout(self.no_account_widget)
-        self.no_account_layout.setAlignment(Qt.AlignCenter)
+        self.no_account_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label = QLabel("Nenhuma conta conectada")
         label.setStyleSheet("font-size: 24px; color: #555;")
         self.no_account_layout.addWidget(label)
@@ -225,7 +237,7 @@ class Home(QMainWindow):
         profile.setCachePath(cache_dir)
         profile.setPersistentStoragePath(cache_dir)
         profile.setDownloadPath(cache_dir)
-        profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
+        profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
         profile.setHttpAcceptLanguage("pt-br")
 
         engine = LogCapturingPage(profile, self.settings_view)
@@ -243,7 +255,7 @@ class Home(QMainWindow):
         profile.setCachePath(cache_dir)
         profile.setPersistentStoragePath(cache_dir)
         profile.setDownloadPath(cache_dir)
-        profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
+        profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
         profile.setHttpAcceptLanguage("pt-br")
 
         engine = LogCapturingPage(profile, self.status_view)
@@ -343,7 +355,7 @@ class Home(QMainWindow):
         profile.setPersistentStoragePath(session_path)
         profile.setDownloadPath(session_path)
         profile.setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
-        profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
+        profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
         profile.setHttpAcceptLanguage("pt-br")
         engine = LogCapturingPage(profile, webview)
         webview.setPage(engine)
@@ -434,7 +446,7 @@ class Home(QMainWindow):
             profile.setPersistentStoragePath(session_path)
             profile.setDownloadPath(session_path)
             profile.setHttpUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
-            profile.setPersistentCookiesPolicy(QWebEngineProfile.AllowPersistentCookies)
+            profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
             profile.setHttpAcceptLanguage("pt-br")
             engine = LogCapturingPage(profile, webview)
             webview.setPage(engine)
@@ -565,3 +577,4 @@ class Home(QMainWindow):
             super().closeEvent(event)
         except Exception:
             pass
+    

@@ -3,11 +3,12 @@ import json
 import shutil
 from typing import Optional
 
-from PyQt5.QtWidgets import QMessageBox, QSystemTrayIcon
-from PyQt5.QtCore import pyqtSlot, QObject
-from PyQt5.QtGui import QIcon
+from PyQt6.QtWidgets import QMessageBox, QSystemTrayIcon
+from PyQt6.QtCore import pyqtSlot, QObject
+from PyQt6.QtGui import QIcon
 from tkinter import filedialog
 from threading import Thread
+
 
 class Controller(QObject):
     def __init__(self, version: str, signals):
@@ -17,7 +18,7 @@ class Controller(QObject):
         self.home = None
         self.messages_base = {"filename": "Selecionar arquivo", "path": ""}
         self.maturation_running = False
-        self.tray = QSystemTrayIcon()
+        self.tray = QSystemTrayIcon(self.home)
         self.tray.setIcon(QIcon("assets/medias/icon.ico"))
         self.tray.show()
 
@@ -90,40 +91,39 @@ class Controller(QObject):
         """Fechar preferencias"""
         self.home.close_preferences()
 
+
     @pyqtSlot(result=str)
     def get_user_configs(self) -> str:
-        """Retorna o conteúdo de preferences.json (ou string vazia se não existir)."""
         try:
             with open("preferences.json", "r", encoding="utf-8") as configs:
-                return configs.read()
-        except FileNotFoundError:
-            return ""
-        except Exception as e:
-            print(f"[Controller] erro ao ler preferences.json: {e}")
-            return ""
+                data = json.load(configs)
+                return json.dumps(data, ensure_ascii=False)
+        except:
+            return "{}"
+
 
     @pyqtSlot(str)
     def update_user_configs(self, new_configs: str):
-        """Atualiza preferences.json com o conteúdo recebido do JS, acrescentando o caminho do arquivo selecionado."""
         try:
             json_data = json.loads(new_configs) if new_configs else {}
-            # Se o JS enviou um caminho novo, usa ele — SENÃO mantém o antigo
-            existing = self.messages_base.get("path", "")
-            new_path = json_data.get("SelectedFilePath") or existing
-            json_data["SelectedFilePath"] = new_path
-
-        except json.JSONDecodeError:
+        except:
             json_data = {}
+
+        # garante que sempre exista a chave correta
+        existing_path = self.messages_base.get("path", "")
+        json_data["selectedFilePath"] = json_data.get("selectedFilePath") or existing_path
+
         try:
-            with open("preferences.json", "w", encoding="utf-8") as file:
-                json.dump(json_data, file, indent=2, ensure_ascii=False)
+            with open("preferences.json", "w", encoding="utf-8") as f:
+                json.dump(json_data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"[Controller] erro ao escrever preferences.json: {e}")
-        
-        # Aplica as novas configurações em todos webview
+            print("Erro ao gravar preferences.json:", e)
+
+        # Atualiza webviews
         for key, wv in self.home.webviews.items():
-            webview = wv["webview"]
-            webview.apply_preferences_sound()
+            wv["webview"].apply_preferences_sound()
+
+
 
     @pyqtSlot(str, str)
     def show_alert(self, title: str, message: str):
@@ -136,7 +136,7 @@ class Controller(QObject):
 
     @pyqtSlot(result=str)
     def select_file(self) -> Optional[str]:
-        """Selecionar arquivo de mensagens via filedialog (tkinter). Retorna caminho ou None."""
+        """Selecionar arquivo de mensagens via filedialog (tkinter)."""
         try:
             file_path = filedialog.askopenfilename(
                 filetypes=[("Arquivos de Texto", "*.txt")],
@@ -145,7 +145,6 @@ class Controller(QObject):
             if not file_path:
                 return None
 
-            # abre de forma segura
             try:
                 with open(file_path, mode="r", encoding="utf-8") as f:
                     content = f.read()
@@ -167,7 +166,6 @@ class Controller(QObject):
     def change_current_webview(self, name: str):
         """Trocar o webview de conta atual no stacked widget e ativar o botão na sidebar."""
         try:
-            # limpa class active de todos (proteção se sidebar não existir)
             if self.home and getattr(self.home, "sidebar", None) and self.home.sidebar.page():
                 try:
                     self.home.sidebar.page().runJavaScript(
@@ -176,20 +174,17 @@ class Controller(QObject):
                 except Exception:
                     pass
 
-            # adiciona o botão remover no menu se ainda não estiver presente
             try:
                 if self.home and self.home.remove_account_action not in self.home.options_menu.actions():
                     self.home.options_menu.addAction(self.home.remove_account_action)
             except Exception:
                 pass
 
-            # troca o webview no stacked
             if not self.home:
                 return
 
             for key, value in self.home.webviews.items():
                 if key == name:
-                    # ativa o botão na sidebar via JS de forma segura
                     script = f"""
                     (function(){{
                         const selected = document.querySelector("[webview='{name}']");
@@ -231,7 +226,7 @@ class Controller(QObject):
 
         except Exception as e:
             print("Erro mostrar opção de parar maturador...")
-            
+
     def setSessionTobeDelete(self, session_path: str):
         """Adicionar sessão ao arquivo delete.json para remoção no próximo start."""
         try:
@@ -265,7 +260,6 @@ class Controller(QObject):
             self.home.webviews[session_name]["connected"] = True
             self.home.webviews[session_name]["phone"] = phone
 
-            # atualiza a sidebar com segurança
             script = f"""
             (function(){{
                 const el = document.querySelector("[webview='{session_name}']");
@@ -275,6 +269,7 @@ class Controller(QObject):
                 if(numberEl) numberEl.textContent = "{session_name} (Conectado)";
                 if(iconEl) iconEl.src = "{photo}";
             }})();
+
             """
             try:
                 if self.home.sidebar and self.home.sidebar.page():
@@ -293,7 +288,6 @@ class Controller(QObject):
 
             self.home.webviews[session_name]["phone"] = None
             self.home.webviews[session_name]["connected"] = False
-
             script = f"""
             (function(){{
                 const el = document.querySelector("[webview='{session_name}']");
@@ -303,11 +297,11 @@ class Controller(QObject):
                 if(numberEl) numberEl.textContent = "{session_name} (Desconectado)";
                 if(iconEl) iconEl.src = "assets/medias/contact.jpg";
             }})();
+
             """
             try:
                 if self.home.sidebar and self.home.sidebar.page():
                     self.home.sidebar.page().runJavaScript(script)
-            
             except Exception:
                 pass
 
@@ -320,13 +314,13 @@ class Controller(QObject):
     def notify(self, title: str, message: str):
         """Mostrar notificação via bandeja."""
         try:
-            self.tray.showMessage(title, message)
+            self.tray.showMessage(title, message, QIcon("assets/medias/icon.ico"))
         except Exception as e:
             print(f"[Controller] erro em notify: {e}")
 
     def inject_message_row(self, data:dict):
         js_code = f""" 
-        window.addMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])});
+        window.addMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])}); 
         """
         self.home.status_view.page().runJavaScript(js_code)
 
@@ -336,21 +330,15 @@ class Controller(QObject):
         connected_keys = [key for key, webview in self.home.webviews.items() if webview.get("connected", False)]
         preferences = json.load(open("preferences.json", "r", encoding="utf8"))
 
-        # Foi bloqueado e NÃO pode continuar
-
         if not preferences["ContinueIfDisconnected"]:
             self.notify("Maturador de chips", f"{sessionName} foi desconectado ou banido. Parando maturação!")
             self.signals.stop_maturation.emit()
             return True
 
-        # Pode continuar, mas agora só restaram 1 conta (insuficiente)
-
         if len(connected_keys) <= 1:
             self.notify("Maturador de chips",f"{sessionName} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. Parando maturação!")
             self.signals.stop_maturation.emit()
             return True
-
-        # Pode continuar e ainda restam contas suficientes
 
         if len(connected_keys) >= 2:
             self.notify("Maturador de chips", f"{sessionName} foi desconectado ou banido. Maturação ainda em andamento.")
@@ -360,3 +348,14 @@ class Controller(QObject):
         Thread(target=whatsapp.stop() if whatsapp else None, daemon=True).start()
         self.setMaturationRunning(False)
         self.home.close_status()
+    
+    def send_whatsapp_text_message(self, sender_key, final_message, receiver_phone):
+        js_code = f"""
+        (async () => {{
+            const user = await window.WTools.GetUser("{receiver_phone}");       
+            const chat = await user.getChat();
+            await chat.sendMessage("{final_message}");
+        }})();
+        """
+        sender_webview = self.home.webviews[sender_key]["webview"]
+        sender_webview.page().runJavaScript(js_code)

@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
+from PyQt6 import QtCore
 from controller import Controller
 from whatsapp import WhatsApp
-from PyQt5 import QtCore
 from home import Home
 import sys
+
 
 class SignalReceive(QtCore.QObject):
     # Fechar aba de preferencias
@@ -17,9 +18,13 @@ class SignalReceive(QtCore.QObject):
     # parar maturação
     stop_maturation = QtCore.pyqtSignal()
     # inserir campo no table de status da maturação
-    inject_message_row =  QtCore.pyqtSignal(dict)
-    
-ripening :WhatsApp = None
+    inject_message_row = QtCore.pyqtSignal(dict)
+    # Enviar mensagem de texto no whatsapp
+    send_whatsapp_text_message = QtCore.pyqtSignal(dict)
+
+
+ripening: WhatsApp = None
+
 
 def start_maturation(signals, controller):
     global ripening, window
@@ -27,26 +32,28 @@ def start_maturation(signals, controller):
     ripening = WhatsApp(signals=signals, controller=controller)
     ripening.prepare()
 
-# Instanciar o app e classes
+
+# Instanciar o app e classes  (MANTIDO EXATAMENTE COMO NO SEU CÓDIGO)
 
 app = QApplication(sys.argv)
 signals = SignalReceive()
 controller = Controller("12.11.2025", signals=signals)
 window = Home(controller=controller)
-#window.sidebar.page().loadStarted.connect(lambda: window.show )
+# window.sidebar.page().loadStarted.connect(lambda: window.show)
 controller.setHomePage(home=window)
 
 # Connectar eventos PyQt Signal
 
-signals.close_preferences.connect( controller.close_preferences )
-signals.new_phone_number.connect( lambda data: controller.accountAuthenticated(data) )
-signals.account_blocked.connect( lambda  data: controller.accountDisconnected(data) )
-signals.start_maturation.connect(lambda: start_maturation(signals=signals, controller=controller) )
+signals.close_preferences.connect(controller.close_preferences)
+signals.new_phone_number.connect(lambda data: controller.accountAuthenticated(data))
+signals.account_blocked.connect(lambda data: controller.accountDisconnected(data))
+signals.start_maturation.connect(lambda: start_maturation(signals=signals, controller=controller))
 signals.inject_message_row.connect(lambda data: controller.inject_message_row(data=data))
-signals.stop_maturation.connect(lambda: controller.stop_maturation(whatsapp=ripening) )
+signals.stop_maturation.connect(lambda: controller.stop_maturation(whatsapp=ripening))
+signals.send_whatsapp_text_message.connect(lambda data: controller.send_whatsapp_text_message(**data) )
 
 # Exibir janela
 
 window.show()
 
-sys.exit(app.exec_())
+sys.exit(app.exec())

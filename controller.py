@@ -1,14 +1,19 @@
-import os
-import json
-import shutil
-from typing import Optional
 
-from PyQt6.QtWidgets import QMessageBox, QSystemTrayIcon
+from PyQt6.QtWidgets import QMessageBox, QSystemTrayIcon, QFileDialog
+
 from PyQt6.QtCore import pyqtSlot, QObject
-from PyQt6.QtGui import QIcon
+
 from tkinter import filedialog
+
+from PyQt6.QtGui import QIcon
+
 from threading import Thread
 
+from typing import Optional
+
+import shutil
+import json
+import os
 
 class Controller(QObject):
     def __init__(self, version: str, signals):
@@ -22,7 +27,6 @@ class Controller(QObject):
         self.tray.setIcon(QIcon("assets/medias/icon.ico"))
         self.tray.show()
 
-        # Garante que delete.json existe e tenta limpar sessões marcadas para exclusão
         self._cleanup_deleted_sessions()
 
     def _cleanup_deleted_sessions(self):
@@ -30,7 +34,6 @@ class Controller(QObject):
         path = "delete.json"
         try:
             if not os.path.exists(path):
-                # cria arquivo vazio com a estrutura esperada
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump({"deleteLaster": []}, f, indent=4, ensure_ascii=False)
                 return
@@ -58,7 +61,6 @@ class Controller(QObject):
                     except ValueError:
                         pass
 
-                # reescreve o arquivo com a lista atualizada
                 file.seek(0)
                 json.dump(json_content, file, indent=4, ensure_ascii=False)
                 file.truncate()
@@ -109,7 +111,6 @@ class Controller(QObject):
         except:
             json_data = {}
 
-        # garante que sempre exista a chave correta
         existing_path = self.messages_base.get("path", "")
         json_data["selectedFilePath"] = json_data.get("selectedFilePath") or existing_path
 
@@ -134,14 +135,18 @@ class Controller(QObject):
         except Exception as e:
             print(f"[Controller] erro ao mostrar alert: {e}")
 
+
     @pyqtSlot(result=str)
     def select_file(self) -> Optional[str]:
-        """Selecionar arquivo de mensagens via filedialog (tkinter)."""
+        """Selecionar arquivo de mensagens via QFileDialog (PyQt6)."""
         try:
-            file_path = filedialog.askopenfilename(
-                filetypes=[("Arquivos de Texto", "*.txt")],
-                title="Maturador de Chips - selecione o arquivo de mensagens"
+            file_path, _ = QFileDialog.getOpenFileName(
+                None,
+                "Maturador de Chips - selecione o arquivo de mensagens",
+                "",
+                "Arquivos de Texto (*.txt)"
             )
+
             if not file_path:
                 return None
 
@@ -157,10 +162,13 @@ class Controller(QObject):
 
             self.messages_base["filename"] = os.path.basename(file_path)
             self.messages_base["path"] = file_path
+
             return file_path
+
         except Exception as e:
             print(f"[Controller] erro em select_file: {e}")
             return None
+
 
     @pyqtSlot(str)
     def change_current_webview(self, name: str):
@@ -362,6 +370,7 @@ class Controller(QObject):
         sender_webview.page().runJavaScript(js_code)
     
     def removeMenuOnStatusPage(self):
+        """Remove o menu enquanto a maturação está em andamento"""
         if self.home.stacked.currentIndex() == 2:
             self.home.options_menu.removeAction(self.home.remove_account_action)
             self.home.options_menu.removeAction(self.home.add_account_action)
@@ -369,6 +378,7 @@ class Controller(QObject):
             self.home.menubar.removeAction(self.home.action_start_maturation)
 
     def restoreMenu(self):
+        """Reativa o menu após fim da maturação"""
         self.home.options_menu.addAction(self.home.remove_account_action)
         self.home.options_menu.addAction(self.home.add_account_action)
         self.home.options_menu.addAction(self.home.config_action)

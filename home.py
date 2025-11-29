@@ -1,29 +1,28 @@
-import json
-import shutil
-import os
-from urllib.parse import parse_qs, urlparse
 
-from PyQt6 import QtWidgets
-from PyQt6.QtWidgets import (
-    QMainWindow, QWidget,
-    QHBoxLayout, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
-)
+from PyQt6.QtWidgets import  QMainWindow, QWidget,  QHBoxLayout, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
+from PyQt6.QtWebEngineCore import  QWebEnginePage, QWebEngineProfile, QWebEngineSettings, QWebEngineUrlRequestInterceptor
+
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import (
-    QWebEnginePage,
-    QWebEngineProfile,
-    QWebEngineSettings,
-    QWebEngineUrlRequestInterceptor
-)
+
+from PyQt6.QtWebEngineCore import QWebEngineUrlRequestInterceptor
+
+from PyQt6.QtWebChannel import QWebChannel
+
+from PyQt6.QtCore import Qt, QUrl, QSettings
 
 from PyQt6.QtGui import QAction
-from PyQt6.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import Qt, QUrl
+
 from PyQt6.QtGui import QIcon
+
+from PyQt6 import QtWidgets
+
+from urllib.parse import parse_qs, urlparse
 
 from controller import Controller
 
+import shutil
+import json
+import os
 
 class Webview(QWebEngineView):
     def __init__(self, parent=None, session_name="GUI", signals=None, inject_js=False):
@@ -175,6 +174,14 @@ class Home(QMainWindow):
         self.setGeometry(100, 100, 1200, 700)
         self.controller = controller
         self.webviews = {}
+
+        # restaura a posição da janela
+
+        settings = QSettings("MaturadorChips", "MainWindow")
+        geometry = settings.value("geometry")
+        
+        if geometry:
+            self.restoreGeometry(geometry)
 
         # Cria o menu
         self.menubar = self.menuBar()
@@ -571,7 +578,12 @@ class Home(QMainWindow):
                     engine.deleteLater()
             except Exception:
                 pass
+        
+        # Salva posição da janela
 
+        settings = QSettings("MaturadorChips", "MainWindow")
+        settings.setValue("geometry", self.saveGeometry())
+        
         # chama o fechamento padrão
         try:
             super().closeEvent(event)

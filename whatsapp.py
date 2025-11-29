@@ -1,14 +1,16 @@
 from controller import Controller
+
 from datetime import datetime
 
 from openai import OpenAI
 
 from PyQt6 import QtCore
+
+import subprocess
 import random
 import json
-import subprocess
-import os
 import time
+import os
 
 class WhatsApp(QtCore.QThread):
     def __init__(self, signals: QtCore.QObject, controller: Controller):

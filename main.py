@@ -1,65 +1,59 @@
-from PyQt5.QtWidgets import QApplication
-from PyQt5 import QtCore
-import dashboard
-import accounts
-
+from PyQt6.QtWidgets import QApplication
+from PyQt6 import QtCore
 from controller import Controller
 from whatsapp import WhatsApp
-import threading
+from home import Home
 import sys
 
-# redireciona saídas de logs e erros para o arquivo de log
-
-sys.stdout = open("MaturadorLogs.txt", "a", encoding="utf-8")
-sys.stderr = open("MaturadorLogs.txt", "a", encoding="utf-8")
-
-# recebe sinais para fazer alguma ação
 
 class SignalReceive(QtCore.QObject):
+    # Fechar aba de preferencias
+    close_preferences = QtCore.pyqtSignal()
     # novo numero adicionado
     new_phone_number = QtCore.pyqtSignal(dict)
     # conta do WhatsApp bloqueada ou desconectada
     account_blocked = QtCore.pyqtSignal(dict)
+    # iniciar maturação
+    start_maturation = QtCore.pyqtSignal()
     # parar maturação
     stop_maturation = QtCore.pyqtSignal()
-    # iniciar maturação
-    start_maturation = QtCore.pyqtSignal(dict, dict)
-    # exibir um Qmessagebox 
-    message_box = QtCore.pyqtSignal(str, str)
+    # inserir campo no table de status da maturação
+    inject_message_row = QtCore.pyqtSignal(dict)
+    # Enviar mensagem de texto no whatsapp
+    send_whatsapp_text_message = QtCore.pyqtSignal(dict)
 
-# iniciar maturação
 
-wapp:WhatsApp = None
+ripening: WhatsApp = None
 
-def start_maturation(window, messages_file, phones,signals):
-    global wapp, controller_instance
-    wapp = WhatsApp(window=window, messages_file=messages_file, phones=phones,signals=signals, webviews=accounts_page.webviews, controller=controller_instance)
-    wapp.start()
 
-# iniciar a aplicação
+def start_maturation(signals, controller):
+    global ripening, window
+    window.status_view.reload()
+    ripening = WhatsApp(signals=signals, controller=controller)
+    ripening.prepare()
 
-VERSION = "24.02.2024"
 
-if __name__ == "__main__":
+# Instanciar o app e classes  (MANTIDO EXATAMENTE COMO NO SEU CÓDIGO)
 
-    app = QApplication(sys.argv)
-    signals = SignalReceive()
-    accounts.SIGNALS = signals
-    accounts_page = accounts.MainWindow()
-    controller_instance = Controller(accounts_page, VERSION, signals)
-    window = dashboard.MainWindow(accounts_page, signals, app, controller_instance)
-    accounts_page.controller = controller_instance
-    controller_instance.dashboard_window = window
-    
-    # conectar os sinais de pyqtsignal
+app = QApplication(sys.argv)
+signals = SignalReceive()
+controller = Controller("12.11.2025", signals=signals)
+window = Home(controller=controller)
+# window.sidebar.page().loadStarted.connect(lambda: window.show)
+controller.setHomePage(home=window)
 
-    signals.new_phone_number.connect(lambda account_data: [controller_instance.account_added(account_data), window.webview.reload()] if account_data else window.webview.reload())
-    signals.start_maturation.connect(lambda messages_file, phones: start_maturation(window=window, messages_file=messages_file, phones=phones,signals=signals))
-    signals.stop_maturation.connect(lambda: threading.Thread(target=wapp.stop() if wapp else None, daemon=True).start())
-    signals.account_blocked.connect(lambda account_data: ( controller_instance.account_blocked(account_data) == wapp.set_account_block(phone=account_data["phone"]) ))
-    signals.message_box.connect(lambda title, message: controller_instance.message_box(message=message, title=title))
-    
-    # iniciar o programa na interface dashboard
-    
-    window.show()   
-    app.exec()
+# Connectar eventos PyQt Signal
+
+signals.close_preferences.connect(controller.close_preferences)
+signals.new_phone_number.connect(lambda data: controller.accountAuthenticated(data))
+signals.account_blocked.connect(lambda data: controller.accountDisconnected(data))
+signals.start_maturation.connect(lambda: start_maturation(signals=signals, controller=controller))
+signals.inject_message_row.connect(lambda data: controller.inject_message_row(data=data))
+signals.stop_maturation.connect(lambda: controller.stop_maturation(whatsapp=ripening))
+signals.send_whatsapp_text_message.connect(lambda data: controller.send_whatsapp_text_message(**data) )
+
+# Exibir janela
+
+window.show()
+
+sys.exit(app.exec())

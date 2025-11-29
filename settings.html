@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configurações — JonasCaetano Dashboard</title>
+  <link
+    href="assets/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f2ed;
+      color: #3b2f2f;
+      font-family: "Segoe UI", sans-serif;
+      zoom: 90%;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 40px 80px;
+      position: relative;
+    }
+
+    h2 {
+      color: #5e3d2e;
+      font-weight: bold;
+      text-align: left;
+      margin-bottom: 25px;
+    }
+
+    .close-btn {
+      position: fixed;
+      top: 20px;
+      right: 25px;
+      background-color: transparent;
+      border: 2px solid #8b4513;
+      color: #8b4513;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      text-align: center;
+      line-height: 30px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+      z-index: 1000;
+    }
+
+    .close-btn:hover {
+      background-color: #8b4513;
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .form-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox {
+      width: 1.2em;
+      height: 1.2em;
+    }
+    
+    .interval-box input {
+      background-color: #fff;
+      color: #3b2f2f;
+      border: 1px solid #cbb7a0;
+      border-radius: 8px;
+      padding: 6px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .form-select {
+      background-color: #fff;
+      border: 1px solid #cbb7a0;
+      color: #3b2f2f;
+      border-radius: 8px;
+      padding: 8px 10px;
+      transition: 0.2s;
+    }
+
+    .form-select:focus {
+      border-color: #a06b45;
+      box-shadow: 0 0 8px #c49b77;
+      outline: none;
+    }
+
+    #extraOption {
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .btn-file {
+      display: inline-block;
+      background-color: #d8c1aa;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #3b2f2f;
+      font-weight: 500;
+      border: none;
+      transition: 0.2s;
+    }
+
+    .btn-file:hover {
+      background-color: #c49b77;
+    }
+
+    #fileName {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.9em;
+      color: #6b4a3a;
+      font-style: italic;
+    }
+
+    #apiToken {
+      display: none;
+      background-color: #fff;
+      border: 1px solid #cbb7a0;
+      border-radius: 8px;
+      padding: 8px;
+      color: #3b2f2f;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .save-btn {
+      display: block;
+      width: 250px;
+      background-color: #a06b45;
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      padding: 10px 0;
+      border-radius: 10px;
+      margin: 40px auto 0;
+      transition: all 0.3s ease;
+    }
+
+    .save-btn:hover {
+      background-color: #8b4513;
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+
+<body>
+  <button class="close-btn">×</button>
+
+  <main>
+    <h2>⚙️ Configurações</h2>
+
+    <div class="form-section">
+      <div class="form-check">
+        <input class="checkbox" type="checkbox" id="shutdown" />
+        <label class="form-check-label" for="shutdown">
+          Desligar computador quando terminar
+        </label>
+      </div>
+
+      <div class="form-check">
+        <input class="checkbox" type="checkbox" id="sound" />
+        <label class="form-check-label" for="sound">
+          Ativar som de notificações
+        </label>
+      </div>
+
+      <div class="form-check">
+        <input class="checkbox" type="checkbox" id="continue" />
+        <label class="form-check-label" for="continue">
+          Continuar mesmo se uma conta for desconectada
+        </label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <label class="form-label fw-bold" style="color: #5e3d2e;">
+        Intervalo entre mensagens (segundos)
+      </label>
+      <div class="d-flex gap-2 interval-box">
+        <input type="number" min="1" value="1" id="minInterval" />
+        <span>à</span>
+        <input type="number" min="2" value="10" id="maxInterval" />
+      </div>
+    </div>
+
+    <div class="form-section">
+      <label class="form-label fw-bold" style="color: #5e3d2e;">
+        Limite de mensagens
+      </label>
+      <input
+        type="number"
+        min="1"
+        value="50"
+        id="limitMessages"
+        class="form-control"
+      />
+    </div>
+
+    <!-- Novo input adicionado aqui -->
+    <div class="form-section">
+      <label class="form-label fw-bold" style="color: #5e3d2e;">
+        Trocar de conta após (mensagens)
+      </label>
+      <input
+        type="number"
+        min="1"
+        value="100"
+        id="switchAccountAfter"
+        class="form-control"
+      />
+    </div>
+
+    <div class="form-section">
+      <label class="form-label fw-bold" style="color: #5e3d2e;">
+        Entrada de mensagens
+      </label>
+      <select id="msgSelect" class="form-select">
+        <option value="file" selected>📁 Arquivo de texto</option>
+        <option value="openai">🤖 By OpenAI</option>
+      </select>
+
+      <div id="extraOption"></div>
+      <input type="text" id="apiToken" placeholder="🔑 Insira seu token da OpenAI" />
+    </div>
+
+    <button class="save-btn" id="saveBtn">💾 Salvar preferências</button>
+  </main>
+
+<script>
+
+  // Variáveis globais usadas em updateExtraOption
+
+  let select, extraDiv, apiTokenInput;
+  let savedToken = "", savedFilePath = "";
+
+  // Função global — agora sempre existe antes de qualquer uso
+  
+  function updateExtraOption() {
+    if (!select || !extraDiv || !apiTokenInput) return;
+    const value = select.value;
+    extraDiv.innerHTML = "";
+
+    if (value === "file") {
+      apiTokenInput.style.display = "none";
+      extraDiv.innerHTML = `
+        <button class="btn-file" id="fileButton">📁 Selecionar arquivo</button>
+        <span id="fileName"></span>
+      `;
+
+      const fileButton = document.getElementById("fileButton");
+      const fileName = document.getElementById("fileName");
+
+      // Exibe nome do arquivo salvo, se existir
+
+      if (savedFilePath) {
+        fileName.textContent = "Arquivo selecionado: " + savedFilePath;
+      }
+
+      fileButton.addEventListener("click", async () => {
+        try {
+          const path = await window.controller.select_file();
+          if (path) {
+            savedFilePath = path;
+            fileName.textContent = "Arquivo selecionado: " + path;
+          }
+        } catch (e) {
+          console.error("Erro ao selecionar arquivo:", e);
+        }
+      });
+    } else if (value === "openai") {
+      apiTokenInput.style.display = "block";
+      apiTokenInput.value = savedToken || "";
+    }
+  }
+
+  // Agora criamos o canal
+
+  new QWebChannel(qt.webChannelTransport, function (channel) {
+    window.controller = channel.objects.controller;
+    select = document.getElementById("msgSelect");
+    extraDiv = document.getElementById("extraOption");
+    apiTokenInput = document.getElementById("apiToken");
+
+    select.addEventListener("change", updateExtraOption);
+  });
+
+  // Carrega script adicional no final
+
+  const script = document.createElement("script");
+  script.src = "assets/js/settings.js";
+  document.body.appendChild(script);
+</script>
+
+</body>
+</html>

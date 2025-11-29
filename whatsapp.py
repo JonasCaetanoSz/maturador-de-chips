@@ -1,221 +1,182 @@
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from plyer import notification
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import QUrl, QThread
-from gpt import GptGenerateMessage
 from controller import Controller
-from dashboard import MainWindow
-import datetime
+
+from datetime import datetime
+
+from openai import OpenAI
+
+from PyQt6 import QtCore
+
+import subprocess
 import random
 import json
 import time
 import os
 
-class WhatsApp(QThread):
-
-    def __init__(self, window:MainWindow, messages_file:dict, phones:dict, signals, webviews:list, controller:Controller) -> None:
+class WhatsApp(QtCore.QThread):
+    def __init__(self, signals: QtCore.QObject, controller: Controller):
         super().__init__()
-        self.messages = [i.rstrip("\r").rstrip("\n") for i in messages_file["content"]]
-        self.configs = json.load(open(file="state.json", mode="r", encoding="utf8"))
-        self.OPEN_CHAT_SCRIPT = open(file="scripts/open_chat.js", mode="r", encoding="utf8").read()
-        self.CHECK_BLOCK_SCRIPT = open(file="scripts/check_block.js", mode="r", encoding="utf8").read()
-        self.SEND_MESSAGE_SCRIPT = open(file="scripts/send_message.js", mode="r", encoding="utf8").read()
-        self.CLOSE_CHAT_SCRIPT = open(file="scripts/close_chat.js", mode="r", encoding="utf8").read()
-        self.gpt_random_message:GptGenerateMessage = None
-        self.have_a_blocked_account = False
         self.controller = controller
-        self.phones = list(set(phones.values()))
-        self.window = window
-        self.webviews = webviews
         self.signals = signals
+        self.messages = []
+        self.preferences = {}
+        self.conversation_histories = {}
 
-        self.phones_sender_control = []
-        self.phones_receiver_control = []
-        self.used_accounts = []
-        self.current_sending_account = None
-        self.current_receiver_account = None
-        self.messages_send_count = 0
-        self.sending = tuple()
+    def prepare(self) -> bool:
+        connected_keys = self.get_connected_keys()
 
-    def start(self) -> None:
+        if len(connected_keys) < 2:
+            return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 2 contas conectadas para iniciar." )
 
-        if len(self.phones) < 2:
-            return QMessageBox.about(
-            self.window,
-            "Maturador de Chips",
-            "número de contas insuficiente para iniciar a maturação."
-        )
+        with open("preferences.json", "r", encoding="utf8") as f:
+            self.preferences = json.load(f)
 
-        elif not self.configs["openAIToken"] and self.configs["messageInputMethod"] == "byOpenAI":
-            return QMessageBox.about(
-            self.window,
-            "Maturador de Chips",
-            "token de acesso á API openIA invalida"
-        )
+        if self.preferences["MessageType"] == "file":
+            if not self.preferences["selectedFilePath"]:
+                return self.controller.show_alert("Maturador de chips", "Nenhum arquivo de mensagens selecionado.")
 
-        elif not self.configs["AIUnofficialToken"] and self.configs["messageInputMethod"] == "byOpenAIUnofficial":
-            return QMessageBox.about(
-            self.window,
-            "Maturador de Chips",
-            "cookie ou token de acesso á API não oficial invalida"
-        )
+            if not os.path.exists(self.preferences["selectedFilePath"]):
+                return self.controller.show_alert("Maturador de chips", "Arquivo de mensagens não existe.")
 
-        elif not self.messages and self.configs["messageInputMethod"] == "byFile":
-            return QMessageBox.about(
-            self.window,
-            "Maturador de Chips",
-            "o arquivo de mensagens base não foi escolhido ou está vazio."
-        )
-        if self.configs["messageInputMethod"] != "byFile":
-            self.gpt_random_message = GptGenerateMessage()
-            self.gpt_random_message.set_bing_cookie(cookie=self.configs["AIUnofficialToken"]) if self.configs["messageInputMethod"] == "byOpenAIUnofficial" \
-                else self.gpt_random_message.ininialize_openai_client(token=self.configs["openAIToken"])
+            with open(self.preferences["selectedFilePath"], "r", encoding="utf-8") as mf:
+                self.messages = mf.readlines()
 
-        self.window.setFixedSize(749, 560)
-        self.window.webview.load(QUrl.fromLocalFile("/pages/updates.html"))
-        self.window.setWindowTitle("Maturador de chips - maturação em andamento ")
+            if not self.messages:
+                return self.controller.show_alert("Maturador de chips", "O arquivo de mensagens está vazio.")
+
+        if self.preferences["MessageType"] == "openai" and not self.preferences["ApiToken"]:
+            return self.controller.show_alert("Maturador de chips", "Token da OpenAI não informado.")
+
+        self.controller.setMaturationRunning(True)
+        self.controller.home.stacked.setCurrentIndex(2)
+        self.controller.removeMenuOnStatusPage()
         super().start()
 
-    # finalizar a thread de maturação
-        
-    def stop(self) -> None:
-        super().terminate()
-    
-    # aquecendo os chips em uma segunda thread para não travar a interface gráfica
-        
+    def get_connected_keys(self):
+        """Filtrar por webviews com status conectado"""
+        return [
+            key for key, wv in self.controller.home.webviews.items()
+            if wv.get("connected", False)
+        ]
+
     def run(self) -> None:
-        # inicializar as variáveis de controle para cada execução
-        phones_copy = self.phones.copy()
-        random.shuffle(phones_copy)  # embaralhar para garantir aleatoriedade
+        """Qtheard de maturação"""
+        limit = int(self.preferences.get("LimitMessages", 1))
+        min_delay = int(self.preferences.get("MinInterval", 1))
+        max_delay = int(self.preferences.get("MaxInterval", 3))
+        last_sender = None
+        sender_count = 0
+        sender_key = None
 
-        for execution_count in range(0, int(self.configs["StopAfterMessages"])):
-            self.messages_send_count += 1
+        for _ in range(limit):
+            connected_keys = self.get_connected_keys()
 
-            if len(self.phones_sender_control) == len(self.phones):
-                self.phones_sender_control.clear()
-
-            if len(self.phones_receiver_control) == len(self.phones):
-                self.phones_receiver_control.clear()
-
-            if len(self.used_accounts) == len(self.phones):
-                self.used_accounts.clear()
-
-            # escolher a conta que envia mensagem
-            while not self.current_sending_account or \
-                self.current_sending_account in self.phones_sender_control or \
-                self.current_sending_account in self.used_accounts:
-                self.current_sending_account = phones_copy.pop()
-                if not phones_copy:  # se não houver mais números de telefone, reiniciar a lista
-                    phones_copy = self.phones.copy()
-                    random.shuffle(phones_copy)
-
-            # escolher a conta que vai receber
-            while not self.current_receiver_account or \
-                self.current_receiver_account in self.phones_receiver_control or \
-                self.current_sending_account == self.current_receiver_account or \
-                self.current_receiver_account in self.used_accounts:
-                self.current_receiver_account = phones_copy.pop()
-                if not phones_copy:  # se não houver mais números de telefone, reiniciar a lista
-                    phones_copy = self.phones.copy()
-                    random.shuffle(phones_copy)
-
-            # atualizar as listas de controle
-                    
-            self.phones_sender_control.append(self.current_sending_account)
-            self.phones_receiver_control.append(self.current_receiver_account)
-            self.used_accounts.extend([self.current_sending_account, self.current_receiver_account])
-
-            # escolhendo mensagem
-                
-            message = random.choice(self.messages) if self.configs["messageInputMethod"] == "byFile" else \
-                self.gpt_random_message.by_official() if self.configs["messageInputMethod"] == "byOpenAI" else self.gpt_random_message.by_unnoficial()
-
-            if isinstance(message, tuple):
-                notification.notify(
-                    title="Maturador de chips",
-                    message=f"erro ao gerar mensagem com GPT: {message[1] if len(message[1]) < (255 - 32) else  message[1][:(255 - 32)]}"  ,
-                    app_icon="pages/assets/medias/icon.ico", 
-                    timeout=5,
-                )
-                continue
-
-            # checando bloqueio e enviando mensagem
-            account_sender_webview:QWebEngineView = self.webviews[ self.phones.index( self.current_sending_account ) ]
-            account_is_blocked = self.check_block(self.current_sending_account, account_webview=account_sender_webview)
-            if account_is_blocked == -1:
-                continue
-            elif account_is_blocked:
+            # se tiver menos de 2, encerra
+            if len(connected_keys) < 2:
+                self.controller.signals.stop_maturation.emit()
                 return
-            account_sender_webview.page().runJavaScript(self.OPEN_CHAT_SCRIPT.replace("@PHONE", self.current_receiver_account))
-            time.sleep(2)
-            account_sender_webview.page().runJavaScript(self.SEND_MESSAGE_SCRIPT.replace("@MESSAGE", message))
-            time.sleep(2)
-            account_sender_webview.page().runJavaScript(self.CLOSE_CHAT_SCRIPT)
-            time.sleep(1)
-    
-            self.controller.notifications.append({
-                "enviadoDe": self.current_sending_account,
-                "recebidoPor": self.current_receiver_account,
-                "mensagem": message,
-                "horario":  datetime.datetime.now().strftime("%H:%M:%S") 
+            
+            if not sender_key or sender_count >= self.preferences["switchAccountAfter"]:
+                # escolher uma conta diferente da anterior
+                possible_senders = [k for k in connected_keys if k != sender_key]
+
+                if possible_senders:
+                    sender_key = random.choice(possible_senders)
+                else:
+                    # fallback (se por algum bug só restar 1 conta)
+                    sender_key = random.choice(connected_keys)
+
+                sender_count = 0
+
+
+            receiver_candidates = [k for k in connected_keys if k != sender_key]
+
+            receiver_key = random.choice(receiver_candidates)
+
+            base_pair = tuple(sorted([sender_key, receiver_key]))
+
+            if base_pair not in self.conversation_histories:
+                self.conversation_histories[base_pair] = []
+            history = self.conversation_histories[base_pair]
+
+            final_message = None
+
+            if len(history) == 0:
+                if self.preferences["MessageType"] == "file":
+                    final_message = self.messages[0].strip()  # pega a primeira mensagem do arquivo
+                else:
+                    final_message = "Olá, tudo bem?"
+
+            else:
+                last_author = history[-1]["author"]
+
+                if last_author == receiver_key and self.preferences["MessageType"] == "openai":
+                    messages = self.build_messages_for_openai(history, responder_key=sender_key)
+                    final_message = self.generate_openai_message(self.preferences["ApiToken"], messages)
+                elif self.preferences["MessageType"] == "file":
+                    final_message = random.choice(self.messages).strip()
+                else:
+                    messages = self.build_messages_for_openai(history, responder_key=sender_key)
+                    final_message = self.generate_openai_message(self.preferences["ApiToken"], messages)
+
+            if not final_message:
+                time.sleep(random.randint(min_delay, max_delay))
+                print("dormindo")
+                continue
+
+            receiver_phone = self.controller.home.webviews[receiver_key]["phone"]
+
+            history.append({"author": sender_key, "content": final_message})
+            time_str = datetime.now().strftime("%H:%M:%S")  # hora:minuto:segundo
+            
+            self.controller.signals.inject_message_row.emit(
+                {
+                "sender": sender_key,
+                "receiver": receiver_key,
+                "message": final_message,
+                "time": time_str,
             })
-
-            # aguardando o fim do intervalo definido pelo usuário
-
-            time.sleep( random.randint( int(self.configs["MinimumMessageInterval"]) ,  int(self.configs["MaximumMessageInterval"]) ))
-
-        # maturação concluída
             
-        if self.configs["ShutdownAfterCompletion"]:
-            os.system("shutdown /s /t 30")
-        self.signals.message_box.emit(
-                "Maturador de chips",
-                "maturação concluída com sucesso!")
-        self.signals.stop_maturation.emit()
+            self.controller.signals.send_whatsapp_text_message.emit({"final_message": final_message, "receiver_phone": receiver_phone, "sender_key": sender_key})
+            sender_count += 1
+            time.sleep(random.randint(min_delay, max_delay))
         
-    # parar maturação
-            
-    def stop(self):
-        super().terminate()
-        self.window.setFixedSize(767, 620)
-        self.window.webview.load(QUrl.fromLocalFile("/pages/dashboard.html"))
-        self.window.setWindowTitle("Maturador de chips - Dashboard")
+        # Fim
+
+        if self.preferences["ShutdownAfterCompletion"]:
+            subprocess.run(["shutdown", "/s", "/t", "30"])
+
+        self.controller.notify("Maturador de chips", "maturação concluída com sucesso!")
+        self.controller.signals.stop_maturation.emit()
+
+    def build_messages_for_openai(self, history, responder_key):
+        """Monta o array de mensagens no formato da OpenAI."""
+        messages = [
+            {
+                "role": "system",
+                "content": "Você está simulando uma conversa natural entre duas pessoas."
+            }
+        ]
+
+        for entry in history:
+            role = "assistant" if entry["author"] == responder_key else "user"
+            messages.append({"role": role, "content": entry["content"]})
+
+        return messages
+
+    def generate_openai_message(self, api_key, messages):
+        """Gerar mensagem com openAI"""
+        try:
+            client = OpenAI(api_key=api_key)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.7
+            )
+            return response.choices[0].message["content"]
+        except Exception as e:
+            self.controller.notify("Erro OpenAI", str(e))
+            return None
     
-    # definir que uma conta foi bloqueada
-        
-    def set_account_block(self, phone:str):
-        self.have_a_blocked_account = True
-
-    # checar se a conta que esta enviando mensagem foi bloqueada os desconectada
-
-    def check_block(self, phone:str, account_webview:QWebEngineView) -> bool|int:
-
-        account_webview.page().runJavaScript(self.CHECK_BLOCK_SCRIPT.replace("@PHONE", phone)) 
-        time.sleep(3)
-        
-        if self.have_a_blocked_account and not self.configs["ContinueOnBlock"]:
-            self.signals.message_box.emit(
-            "Maturador de Chips",
-            f"o número {phone} foi desconectado ou banido. parando maturação!")
-            self.signals.stop_maturation.emit()
-            return True
-        
-        elif self.have_a_blocked_account and len(self.phones) == 2:
-            self.signals.message_box.emit(
-                "Maturador de Chips",
-                f"o número {phone} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. parando maturação!")
-            self.signals.stop_maturation.emit()
-            return True
-
-        elif self.have_a_blocked_account:
-            notification.notify(
-                    title="Maturador de chips",
-                    message="conta desconectada ou banida: " + phone,
-                    app_icon="pages/assets/medias/icon.ico", 
-                    timeout=5,
-                )
-            self.phones.remove(phone)
-            self.have_a_blocked_account = False
-            return -1
-        
-        return False
+    def stop(self):
+        """Parar Qtheard de maturação"""
+        super().terminate()

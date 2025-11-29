@@ -61,6 +61,7 @@ class WhatsApp(QtCore.QThread):
         limit = int(self.preferences.get("LimitMessages", 1))
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
+        last_sender = None
         sender_count = 0
         sender_key = None
 
@@ -72,8 +73,16 @@ class WhatsApp(QtCore.QThread):
                 self.controller.signals.stop_maturation.emit()
                 return
             
-            if not sender_key or sender_count >= self.preferences["switchAccountAfter"] :
-                sender_key = random.choice(connected_keys)
+            if not sender_key or sender_count >= self.preferences["switchAccountAfter"]:
+                # escolher uma conta diferente da anterior
+                possible_senders = [k for k in connected_keys if k != sender_key]
+
+                if possible_senders:
+                    sender_key = random.choice(possible_senders)
+                else:
+                    # fallback (se por algum bug só restar 1 conta)
+                    sender_key = random.choice(connected_keys)
+
                 sender_count = 0
 
 

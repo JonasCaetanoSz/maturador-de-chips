@@ -18,6 +18,12 @@ git clone https://github.com/JonasCaetanoSz/maturador-de-chips.git
 
 ```
 
+Vá para o diretório do programa
+
+```shell
+cd maturador-de-chips
+```
+
 Crie um ambiente virtual e ative-o
 
 ```shell
@@ -63,7 +69,7 @@ pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ic
 
 ### Como usar o chat GPT para gerar mensagens?
 
- - accese <a href="https://platform.openai.com/settings/keys"> https://platform.openai.com/settings/keys </a>
+ - accese <a href="https://platform.openai.com/api-keys">https://platform.openai.com/settings/keys</a>
 
  - Clique em Create new secret key.
 

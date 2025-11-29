@@ -60,6 +60,8 @@ class WhatsApp(QtCore.QThread):
         limit = int(self.preferences.get("LimitMessages", 1))
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
+        sender_count = 0
+        sender_key = None
 
         for _ in range(limit):
             connected_keys = self.get_connected_keys()
@@ -68,8 +70,11 @@ class WhatsApp(QtCore.QThread):
             if len(connected_keys) < 2:
                 self.controller.signals.stop_maturation.emit()
                 return
+            
+            if not sender_key or sender_count >= self.preferences["switchAccountAfter"] :
+                sender_key = random.choice(connected_keys)
+                sender_count = 0
 
-            sender_key = random.choice(connected_keys)
 
             receiver_candidates = [k for k in connected_keys if k != sender_key]
 
@@ -120,6 +125,7 @@ class WhatsApp(QtCore.QThread):
             })
             
             self.controller.signals.send_whatsapp_text_message.emit({"final_message": final_message, "receiver_phone": receiver_phone, "sender_key": sender_key})
+            sender_count += 1
             time.sleep(random.randint(min_delay, max_delay))
         
         # Fim

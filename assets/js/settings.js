@@ -23,6 +23,7 @@
 
       //  Limite de mensagens 
       document.getElementById("limitMessages").value = preferences.LimitMessages;
+      document.getElementById("switchAccountAfter").value = preferences.switchAccountAfter;
 
       //  Fonte de mensagens 
       const select = document.getElementById("msgSelect");
@@ -66,6 +67,7 @@
     const minInterval = parseInt(document.querySelector("#minInterval").value);
     const maxInterval = parseInt(document.querySelector("#maxInterval").value);
     const limitMessages = parseInt(document.querySelector("#limitMessages").value);
+    const switchAccountAfter = parseInt(document.getElementById("switchAccountAfter").value);
     const msgSelect = document.querySelector("#msgSelect").value;
     const tokenInput = document.querySelector("#apiToken");
     const apiToken = tokenInput ? tokenInput.value.trim() : currentToken;
@@ -78,9 +80,11 @@
     if (
       !minInterval ||
       !maxInterval ||
+      !switchAccountAfter ||
       minInterval >= maxInterval ||
       !limitMessages ||
-      limitMessages <= 0
+      limitMessages <= 0 ||
+      switchAccountAfter <= 0
     ) {
       window.controller.show_alert(
         "Maturador de chips",
@@ -111,7 +115,8 @@
       LimitMessages: limitMessages,
       MessageType: msgSelect,
       ApiToken: apiToken,
-      selectedFilePath: currentFilePath
+      selectedFilePath: currentFilePath,
+      switchAccountAfter: switchAccountAfter
     };
 
     // Envia para backend

@@ -9,7 +9,7 @@ maturador de chips é um pequeno programa para "esquentar" contas do whatssap e 
 
 ## Instalação
 
-Se você é usuário  Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v24.02.2024/MaturadorSetup_24.02.2024.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de codigo aberto:
+Se você é usuário  Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v2025.11.12/MaturadorSetup2025.11.12.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de codigo aberto:
 
 - Clone o repositório
 
@@ -49,43 +49,30 @@ python main.py
 - Definir máximo de mensagens
 - Parar em caso de bloqueio
 - Mensagens com ChatGpt
--   sem limite de instâncias
+- sem limite de instâncias
 -  escolher nome instância
  - remover instância
-
-### Versões Alternativas:
- 
- - <a href="https://github.com/APIBrasil/maturador-de-chips"> https://github.com/APIBrasil/maturador-de-chips </a>
- - <a href="https://github.com/AdrianoF0nseca/maturador-de-chips"> https://github.com/AdrianoF0nseca/maturador-de-chips </a>
-
 
 ### Como gerar meu próprio executável?
 
 Este é o comando pyinstaller para gerar o executavel do maturador:
 
 ```shell
-pyinstaller  --noconfirm --onedir --windowed --icon "$(pwd)/pages/assets/medias/icon.ico" --add-data "$(pwd)/pages;pages/" --add-data "$(pwd)/scripts;scripts/" --add-data "$(pwd)/LICENSE;." --add-data "$(pwd)/gpt.py;." --add-data "$(pwd)/README.MD;." --add-data "$(pwd)/user-agent;." --add-data "$(pwd)/requirements.txt;."  "$(pwd)/main.py"
-
+pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ico" --name "Maturador de chips" --add-data "$(pwd)/preferences.json;." --add-data "$(pwd)/injected.js;." --add-data "$(pwd)/settings.html;." --add-data "$(pwd)/status.html;." --add-data "$(pwd)/whatsapp_list.html;." --add-data "$(pwd)/delete.json;." --add-data "$(pwd)/assets;assets" "$(pwd)/main.py"
 ```
 
-### Encontrar o cookie de sessão para API não oficial?
+### Como usar o chat GPT para gerar mensagens?
 
+ - accese <a href="https://platform.openai.com/settings/keys"> https://platform.openai.com/settings/keys </a>
 
-- 1 ° acesse o site <a href="https://bing.com"> bing </a> e faça login usando uma conta miscrosoft. após login abra o *developer tools* presionando as teclas **CTRL + SHIFT + I** ou siga os passos na foto abaixo para realizar esta ação:
+ - Clique em Create new secret key.
 
-![step1](https://i.ibb.co/TTSSXm1/passo-1.png)
+ - Copie a chave (começa com sk-).
 
-
-- 2 ° busque no submenu que fica ao lado de *network*, a opção **Application** e clique sobre ela:
-
-![step2](https://i.ibb.co/Q8JZpPZ/passo-2.png)
-
-- 3 ° por ultimo encontre o cookie nomeado de **_U** e copie seu valor:
-
-![step3](https://i.ibb.co/rdBFNt4/passo-3.png)
-
+ - Cole no campo Token da OpenAI no programa.
 
 ## Licença
 
 
 distribuído sobre [MIT](https://choosealicense.com/licenses/mit/) Licença
+

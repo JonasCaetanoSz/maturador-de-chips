@@ -46,6 +46,7 @@ class WhatsApp(QtCore.QThread):
 
         self.controller.setMaturationRunning(True)
         self.controller.home.stacked.setCurrentIndex(2)
+        self.controller.removeMenuOnStatusPage()
         super().start()
 
     def get_connected_keys(self):

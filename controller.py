@@ -348,6 +348,7 @@ class Controller(QObject):
         Thread(target=whatsapp.stop() if whatsapp else None, daemon=True).start()
         self.setMaturationRunning(False)
         self.home.close_status()
+        self.restoreMenu()
     
     def send_whatsapp_text_message(self, sender_key, final_message, receiver_phone):
         js_code = f"""
@@ -359,3 +360,16 @@ class Controller(QObject):
         """
         sender_webview = self.home.webviews[sender_key]["webview"]
         sender_webview.page().runJavaScript(js_code)
+    
+    def removeMenuOnStatusPage(self):
+        if self.home.stacked.currentIndex() == 2:
+            self.home.options_menu.removeAction(self.home.remove_account_action)
+            self.home.options_menu.removeAction(self.home.add_account_action)
+            self.home.options_menu.removeAction(self.home.config_action)
+            self.home.menubar.removeAction(self.home.action_start_maturation)
+
+    def restoreMenu(self):
+        self.home.options_menu.addAction(self.home.remove_account_action)
+        self.home.options_menu.addAction(self.home.add_account_action)
+        self.home.options_menu.addAction(self.home.config_action)
+        self.home.menubar.addAction(self.home.action_start_maturation)

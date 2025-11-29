@@ -177,28 +177,28 @@ class Home(QMainWindow):
         self.webviews = {}
 
         # Cria o menu
-        menubar = self.menuBar()
-        self.options_menu = menubar.addMenu("Opções")
+        self.menubar = self.menuBar()
+        self.options_menu = self.menubar.addMenu("Opções")
         # Ação solta na barra
         self.action_start_maturation = QAction("Iniciar", self)
         # note: emitir diretamente no controller.signals
         self.action_start_maturation.triggered.connect(lambda: self.controller.signals.start_maturation.emit())
-        menubar.addAction(self.action_start_maturation)
+        self.menubar.addAction(self.action_start_maturation)
         # Ação de configurações
-        config_action = QAction("Configurações", self)
-        config_action.triggered.connect(self.open_preferences)
-        self.options_menu.addAction(config_action)
+        self.config_action = QAction("Configurações", self)
+        self.config_action.triggered.connect(self.open_preferences)
+        self.options_menu.addAction(self.config_action)
 
         # Ação de adicionar conta
-        add_account_action = QAction("Adicionar conta", self)
-        add_account_action.triggered.connect(self.add_account)
-        self.options_menu.addAction(add_account_action)
+        self.add_account_action = QAction("Adicionar conta", self)
+        self.add_account_action.triggered.connect(self.add_account)
+        self.options_menu.addAction(self.add_account_action)
 
         # Ação de remover conta
         self.remove_account_action = QAction("Remover conta", self)
         self.remove_account_action.setEnabled(True)
         self.remove_account_action.triggered.connect(self.delete_session)
-
+        
         # Layout central
         central_widget = QWidget()
         layout = QHBoxLayout(central_widget)

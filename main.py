@@ -33,7 +33,7 @@ def start_maturation(signals, controller):
     ripening.prepare()
 
 
-# Instanciar o app e classes  (MANTIDO EXATAMENTE COMO NO SEU CÓDIGO)
+# Instanciar o app e classes  
 
 app = QApplication(sys.argv)
 signals = SignalReceive()

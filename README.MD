@@ -4,18 +4,16 @@
 
 # Maturador de chips
 
-maturador de chips é um pequeno programa para "esquentar" contas do whatssap e dessa forma, evitar banimento da rede social
-
+Maturador de chips é um pequeno programa para "esquentar" contas do WhatsApp e, dessa forma, evitar banimento da rede social.
 
 ## Instalação
 
-Se você é usuário  Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v2025.11.12/MaturadorSetup2025.11.12.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de codigo aberto:
+Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v2025.11.12/MaturadorSetup2025.11.12.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
 
 - Clone o repositório
 
 ```shell
 git clone https://github.com/JonasCaetanoSz/maturador-de-chips.git
-
 ```
 
 Vá para o diretório do programa
@@ -36,13 +34,11 @@ python -m venv .venv
 
 - Instale as dependências
 
-
 ```shell
 pip install -r requirements.txt
 ```
 
 - Inicie o programa
-
 
 ```shell
 python main.py
@@ -55,23 +51,23 @@ python main.py
 - Definir máximo de mensagens
 - Parar em caso de bloqueio
 - Mensagens com ChatGpt
-- sem limite de instâncias
--  escolher nome instância
- - remover instância
+- Sem limite de instâncias
+- Escolher nome da instância
+- Remover instância
 
 ### Como gerar meu próprio executável?
 
-Este é o comando pyinstaller para gerar o executavel do maturador:
+Este é o comando pyinstaller para gerar o executável do maturador:
 
 ```shell
 pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ico" --name "Maturador de chips" --add-data "$(pwd)/preferences.json;." --add-data "$(pwd)/injected.js;." --add-data "$(pwd)/settings.html;." --add-data "$(pwd)/status.html;." --add-data "$(pwd)/whatsapp_list.html;." --add-data "$(pwd)/delete.json;." --add-data "$(pwd)/assets;assets" "$(pwd)/main.py"
 ```
 
-### Como usar o chat GPT para gerar mensagens?
+### Como usar o Chat GPT para gerar mensagens?
 
- - accese <a href="https://platform.openai.com/api-keys">https://platform.openai.com/settings/keys</a>
+ - Acesse <a href="https://platform.openai.com/api-keys">https://platform.openai.com/settings/keys</a>
 
- - Clique em Create new secret key.
+ - Clique em "Create new secret key".
 
  - Copie a chave (começa com sk-).
 
@@ -79,6 +75,4 @@ pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ic
 
 ## Licença
 
-
-distribuído sobre [MIT](https://choosealicense.com/licenses/mit/) Licença
-
+Distribuído sob Licença [MIT](https://choosealicense.com/licenses/mit/)

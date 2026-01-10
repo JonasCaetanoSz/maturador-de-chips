@@ -16,13 +16,13 @@ Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/ma
 git clone https://github.com/JonasCaetanoSz/maturador-de-chips.git
 ```
 
-Vá para o diretório do programa
+- Vá para o diretório do programa
 
 ```shell
 cd maturador-de-chips
 ```
 
-Crie um ambiente virtual e ative-o
+- Crie um ambiente virtual e ative-o
 
 ```shell
 python -m venv .venv 
@@ -76,3 +76,4 @@ pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ic
 ## Licença
 
 Distribuído sob Licença [MIT](https://choosealicense.com/licenses/mit/)
+

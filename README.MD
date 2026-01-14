@@ -65,7 +65,7 @@ pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ic
 
 ### Como usar o Chat GPT para gerar mensagens?
 
- - Acesse <a href="https://platform.openai.com/api-keys">https://platform.openai.com/settings/keys</a>
+ - Acesse <a href="https://platform.openai.com/settings/organization/api-keys">https://platform.openai.com/settings/organization/api-keys</a>
 
  - Clique em "Create new secret key".
 
@@ -76,4 +76,5 @@ pyinstaller --noconfirm --onedir --windowed --icon "$(pwd)/assets/medias/icon.ic
 ## Licença
 
 Distribuído sob Licença [MIT](https://choosealicense.com/licenses/mit/)
+
 

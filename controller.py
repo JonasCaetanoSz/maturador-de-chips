@@ -19,6 +19,7 @@ class Controller(QObject):
     def __init__(self, version: str, signals):
         super().__init__()
         self.signals = signals
+        self.VERSION = version
         self.window = None
         self.home = None
         self.messages_base = {"filename": "Selecionar arquivo", "path": ""}

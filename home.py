@@ -169,7 +169,7 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
 class Home(QMainWindow):
     def __init__(self, controller: Controller):
         super().__init__()
-        self.setWindowTitle("Maturador de chips 2025.11.12")
+        self.setWindowTitle(f"Maturador de chips {controller.VERSION}")
         self.setWindowIcon(QIcon("assets/medias/icon.ico"))
         self.setGeometry(100, 100, 1200, 700)
         self.controller = controller

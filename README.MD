@@ -6,9 +6,15 @@
 
 Maturador de chips é um pequeno programa para "esquentar" contas do WhatsApp e, dessa forma, evitar banimento da rede social.
 
+## 💖 Apoiar o desenvolvedor deste programa
+
+Caso você queira contribuir com este projeto, escaneie o QR Code Pix abaixo:
+
+![QR Code Pix](https://i.ibb.co/1t6g9Nqv/qrcode-pix.png)
+
 ## Instalação
 
-Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v2025.11.12/MaturadorSetup2025.11.12.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
+Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v29.04.2026/MaturadorSetup29.04.2026.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
 
 - Clone o repositório
 

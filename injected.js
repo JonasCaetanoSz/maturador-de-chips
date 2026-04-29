@@ -1,4 +1,4 @@
-/**
+ /**
    * Cria uma intancia de chat com usuario
    
   * @param {Object} model - Instancia de modelo de Chat do whatsapp
@@ -168,10 +168,9 @@ class Chat {
 */
 
   async unmute(){
-    return new Promise(async(resolve, reject) => {
-      window.require("WAWebCmd").Cmd.muteChat(this._model, false)
-    })
-};
+    window.require("WAWebCmd").Cmd.muteChat(this._model, false)
+    return true;
+  };
 
 
 /**
@@ -312,7 +311,8 @@ class User{
 */
 
   async profilePic(){
-    const picture = await window.require("WAWebContactProfilePicThumbBridge").requestProfilePicFromServer(this._wid);
+    this._chat = (await this.getChat())._model;
+    const picture = await window.require("WAWebContactProfilePicThumbBridge").requestProfilePicFromServer(this._chat);
     
     if ( picture.eurl ){
 
@@ -349,13 +349,9 @@ class User{
 */
   async block(){
 
-    const contact = await window.require("WAWebCollections").Contact.get(this._wid);
-    await window.require("WAWebBlockContactAction").blockContact(
-    {
-      "contact": contact,
-      "blockEntryPoint":"profile"
-    });
-
+    this._chat = (await this.getChat())._model;
+    const contact = this._chat.contact;
+    await window.require('WAWebBlockContactAction').blockContact({ contact: contact });
     return true;
 };
 
@@ -365,9 +361,10 @@ class User{
  * @returns {Promise<Boolean>} - Retorna true se usuario for desbloqueado
 */
   async unblock(){
-      const contact = await window.require("WAWebCollections").Contact.get(this._wid);
-      await window.require("WAWebBlockContactAction").unblockContact(contact)
-      return true;
+    this._chat = (await this.getChat())._model;
+    const contact = this._chat.contact;
+    await window.require("WAWebBlockContactAction").unblockContact(contact)
+    return true;
   }
 
 /**
@@ -395,11 +392,8 @@ class User{
 class WhatsAppTools  {
 
   constructor (){
-    this.onReady(() => {
     this.myWid = window.require("WAWebUserPrefsMeUser").getMaybeMePnUser() || window.require("WAWebUserPrefsMeUser").getMaybeMeLidUser();
     this.myLid = window.require("WAWebUserPrefsMeUser").getMaybeMeLidUser()
-    
-    })
 };
 
 /**
@@ -411,11 +405,14 @@ class WhatsAppTools  {
   async myProfileShortDetails() {
 
     if (this.myWid){
+
+      var model = {id: this.myWid, isGroup: false}
+      
       return {
         "display_name": await window.require("WAWebUserPrefsGeneral").getPushname(),
         "biograpy": ( await window.require("WAWebContactStatusBridge").getStatus({"token":"", "wid": this.myLid}) ).status,
         "phone": await window.require("WAWebUserPrefsMeUser").getMaybeMePnUser().user ,
-        "profilePic": await window.require("WAWebContactProfilePicThumbBridge").requestProfilePicFromServer(this.myWid),
+        "profilePic": await window.require("WAWebContactProfilePicThumbBridge").requestProfilePicFromServer(model),
         "privacy": await window.require("WAWebUserPrefsGeneral").getUserPrivacySettings(),
     };
   }
@@ -520,6 +517,8 @@ class WhatsAppTools  {
       })   
   }
 }
+
+var WTools = new WhatsAppTools()
 
 window.sessionName = "@instanceName";
 

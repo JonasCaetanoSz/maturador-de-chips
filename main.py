@@ -37,7 +37,7 @@ def start_maturation(signals, controller):
 
 app = QApplication(sys.argv)
 signals = SignalReceive()
-controller = Controller("12.11.2025", signals=signals)
+controller = Controller("29.04.2026", signals=signals)
 window = Home(controller=controller)
 # window.sidebar.page().loadStarted.connect(lambda: window.show)
 controller.setHomePage(home=window)

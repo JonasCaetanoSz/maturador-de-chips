@@ -4,304 +4,386 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurações — JonasCaetano Dashboard</title>
-  <link
-    href="assets/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+  <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
   <script src="assets/js/ajax.googleapis.com_ajax_libs_jquery_1_jquery.js"></script>
   <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 
   <style>
+    /* PALETA ORIGINAL MANTIDA */
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
       background-color: #f5f2ed;
       color: #3b2f2f;
-      font-family: "Segoe UI", sans-serif;
-      zoom: 90%;
-      overflow-y: auto;
-      overflow-x: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      zoom: 95%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 40px;
+      padding-bottom: 40px;
     }
 
     main {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 0 40px 80px;
+      background: #ffffff;
+      width: 100%;
+      max-width: 700px;
+      padding: 35px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(139, 69, 19, 0.08);
       position: relative;
+      border: 1px solid #eaddd3;
     }
 
     h2 {
       color: #5e3d2e;
-      font-weight: bold;
-      text-align: left;
-      margin-bottom: 25px;
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
     }
 
     .close-btn {
-      position: fixed;
-      top: 20px;
+      position: absolute;
+      top: 25px;
       right: 25px;
       background-color: transparent;
-      border: 2px solid #8b4513;
+      border: 2px solid #cbb7a0;
       color: #8b4513;
       font-weight: bold;
       border-radius: 50%;
-      width: 35px;
-      height: 35px;
+      width: 32px;
+      height: 32px;
       text-align: center;
-      line-height: 30px;
+      line-height: 28px;
       font-size: 20px;
       cursor: pointer;
-      transition: 0.2s;
+      transition: all 0.2s ease;
       z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .close-btn:hover {
       background-color: #8b4513;
+      border-color: #8b4513;
       color: #fff;
-      transform: scale(1.05);
+      transform: scale(1.1) rotate(90deg);
+    }
+
+    /* SISTEMA DE ABAS */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #f0e6dd;
+      margin-bottom: 25px;
+      gap: 10px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #8b796d;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      color: #a06b45;
+    }
+
+    .tab-btn.active {
+      color: #5e3d2e;
+      border-bottom: 3px solid #a06b45;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ELEMENTOS DOS FORMULÁRIOS */
+    .form-section {
+      margin-bottom: 20px;
     }
 
     .form-check {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: background 0.2s;
     }
-
-    .checkbox {
-      width: 1.2em;
-      height: 1.2em;
-    }
+    .form-check:hover { background: #faf7f2; }
+    .checkbox { width: 1.2em; height: 1.2em; accent-color: #a06b45; cursor: pointer; margin: 0; }
+    .form-check-label { cursor: pointer; font-weight: 500; margin: 0; }
     
-    .interval-box input {
-      background-color: #fff;
+    .form-label { font-size: 0.95rem; margin-bottom: 8px; color: #5e3d2e; font-weight: bold; }
+
+    .input-box {
+      background-color: #fbfaf9;
       color: #3b2f2f;
       border: 1px solid #cbb7a0;
       border-radius: 8px;
-      padding: 6px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
       width: 100%;
-      text-align: center;
+      box-sizing: border-box;
     }
-
-    .form-select {
-      background-color: #fff;
-      border: 1px solid #cbb7a0;
-      color: #3b2f2f;
-      border-radius: 8px;
-      padding: 8px 10px;
-      transition: 0.2s;
-    }
-
-    .form-select:focus {
+    .input-box:focus {
       border-color: #a06b45;
-      box-shadow: 0 0 8px #c49b77;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(160, 107, 69, 0.15);
       outline: none;
     }
 
-    #extraOption {
-      margin-top: 10px;
-      text-align: left;
-    }
+    .interval-box { display: flex; align-items: center; gap: 10px; }
+    .interval-box span { color: #8b4513; font-weight: 600; }
 
     .btn-file {
-      display: inline-block;
-      background-color: #d8c1aa;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #3b2f2f;
-      font-weight: 500;
-      border: none;
-      transition: 0.2s;
+      display: inline-flex; align-items: center; justify-content: center;
+      background-color: #d8c1aa; padding: 10px 18px; border-radius: 8px;
+      cursor: pointer; color: #5e3d2e; font-weight: 600; border: none;
+      transition: all 0.2s ease; font-size: 0.9rem;
     }
+    .btn-file:hover { background-color: #c49b77; color: #3b2f2f; transform: translateY(-1px); }
 
-    .btn-file:hover {
-      background-color: #c49b77;
-    }
-
-    #fileName {
-      display: block;
-      margin-top: 6px;
-      font-size: 0.9em;
-      color: #6b4a3a;
-      font-style: italic;
-    }
-
-    #apiToken {
-      display: none;
-      background-color: #fff;
-      border: 1px solid #cbb7a0;
-      border-radius: 8px;
-      padding: 8px;
-      color: #3b2f2f;
-      width: 100%;
-      margin-top: 10px;
+    .file-name {
+      display: none; margin-top: 10px; font-size: 0.85rem; color: #6b4a3a; font-style: italic;
+      background: #faf7f2; padding: 8px 12px; border-radius: 6px; border: 1px dashed #cbb7a0;
     }
 
     .save-btn {
-      display: block;
-      width: 250px;
-      background-color: #a06b45;
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      padding: 10px 0;
-      border-radius: 10px;
-      margin: 40px auto 0;
-      transition: all 0.3s ease;
+      display: flex; justify-content: center; align-items: center; width: 100%;
+      background-color: #a06b45; border: none; color: #fff; font-weight: 600;
+      font-size: 1.05rem; padding: 14px 0; border-radius: 10px; margin-top: 35px;
+      transition: all 0.3s ease; cursor: pointer; box-shadow: 0 4px 12px rgba(160, 107, 69, 0.2);
     }
+    .save-btn:hover { background-color: #8b4513; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(139, 69, 19, 0.3); }
 
-    .save-btn:hover {
-      background-color: #8b4513;
-      transform: scale(1.02);
+    .credits {
+      position: fixed; bottom: 20px; right: 20px; font-size: 0.75rem; color: #6b4a3a; font-family: monospace;
+      background: rgba(245, 242, 237, 0.9); padding: 8px 14px; border-radius: 20px;
+      backdrop-filter: blur(8px); box-shadow: 0 4px 6px rgba(139, 69, 19, 0.08); z-index: 100; border: 1px solid #eaddd3;
     }
+    .credits a { color: #a06b45; text-decoration: none; font-weight: 700; transition: 0.2s; }
+    .credits a:hover { text-decoration: underline; color: #8b4513; }
   </style>
 </head>
 
 <body>
-  <button class="close-btn">×</button>
+  <div class="credits">
+    GitHub: <span style="cursor: pointer; text-decoration: underline; color: #b8860b;" onclick="event.preventDefault(); controller.open_external_url('https://github.com/SouzaTDG');">ggonchoroskis</span>
+  </div>
 
   <main>
+    <button class="close-btn" title="Fechar configurações">×</button>
     <h2>⚙️ Configurações</h2>
 
-    <div class="form-section">
-      <div class="form-check">
-        <input class="checkbox" type="checkbox" id="shutdown" />
-        <label class="form-check-label" for="shutdown">
-          Desligar computador quando terminar
-        </label>
+    <!-- CONTROLES DAS ABAS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="openTab('tab-private')">👤 Maturação no Privado</button>
+      <button class="tab-btn" onclick="openTab('tab-groups')">👥 Maturação em Grupos</button>
+    </div>
+
+    <!-- ==========================================
+         ABA 1: MATURAÇÃO PRIVADA (ORIGINAL)
+         ========================================== -->
+    <div id="tab-private" class="tab-content active">
+      <div class="form-section">
+        <div class="form-check">
+          <input class="checkbox" type="checkbox" id="shutdown" />
+          <label class="form-check-label" for="shutdown">Desligar computador quando terminar</label>
+        </div>
+        <div class="form-check">
+          <input class="checkbox" type="checkbox" id="sound" />
+          <label class="form-check-label" for="sound">Ativar som de notificações</label>
+        </div>
+        <div class="form-check">
+          <input class="checkbox" type="checkbox" id="continue" />
+          <label class="form-check-label" for="continue">Continuar mesmo se uma conta for desconectada</label>
+        </div>
       </div>
 
-      <div class="form-check">
-        <input class="checkbox" type="checkbox" id="sound" />
-        <label class="form-check-label" for="sound">
-          Ativar som de notificações
-        </label>
+      <div class="form-section">
+        <label class="form-label">Intervalo entre mensagens (segundos)</label>
+        <div class="interval-box">
+          <input type="number" class="input-box" min="1" value="1" id="minInterval" />
+          <span>à</span>
+          <input type="number" class="input-box" min="2" value="10" id="maxInterval" />
+        </div>
       </div>
 
-      <div class="form-check">
-        <input class="checkbox" type="checkbox" id="continue" />
-        <label class="form-check-label" for="continue">
-          Continuar mesmo se uma conta for desconectada
-        </label>
+      <div class="form-section">
+        <label class="form-label">Limite de mensagens</label>
+        <input type="number" class="input-box" min="1" value="50" id="limitMessages" />
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Trocar de conta após (mensagens)</label>
+        <input type="number" class="input-box" min="1" value="100" id="switchAccountAfter" />
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Entrada de mensagens</label>
+        <select id="msgSelect" class="input-box" onchange="updateExtraOption('private')">
+          <option value="file" selected>📁 Arquivo de texto</option>
+          <option value="openai">🤖 By OpenAI</option>
+        </select>
+        
+        <div style="margin-top: 15px;">
+          <button class="btn-file" id="btnFilePrivate" onclick="selectFile('private')">📁 Selecionar arquivo</button>
+          <span class="file-name" id="fileNamePrivate"></span>
+          <input type="text" class="input-box" id="apiTokenPrivate" placeholder="🔑 Insira seu token da OpenAI (sk-...)" style="display: none;" />
+        </div>
       </div>
     </div>
 
-    <div class="form-section">
-      <label class="form-label fw-bold" style="color: #5e3d2e;">
-        Intervalo entre mensagens (segundos)
-      </label>
-      <div class="d-flex gap-2 interval-box">
-        <input type="number" min="1" value="1" id="minInterval" />
-        <span>à</span>
-        <input type="number" min="2" value="10" id="maxInterval" />
+    <!-- ==========================================
+         ABA 2: MATURAÇÃO EM GRUPOS (NOVIDADE DINÂMICA)
+         ========================================== -->
+    <div id="tab-groups" class="tab-content">
+      <div class="form-section">
+        <label class="form-label">🎯 Vinculação de Grupos Alvo por Chip</label>
+        <p style="font-size: 0.85rem; color: #8b796d; margin-top: -5px; margin-bottom: 15px;">
+          Os chips precisam estar conectados na tela principal para que seus grupos apareçam aqui.
+        </p>
+        <div id="chipsGroupsContainer" style="display: flex; flex-direction: column; gap: 15px;">
+          <div style="text-align: center; color: #8b4513; font-style: italic; padding: 10px;">
+            Carregando canais e grupos ativos...
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Intervalo entre mensagens (minutos)</label>
+        <div class="interval-box">
+          <input type="number" class="input-box" min="1" value="10" id="minIntervalGrp" />
+          <span>à</span>
+          <input type="number" class="input-box" min="2" value="30" id="maxIntervalGrp" />
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Total de envios até parar a maturação</label>
+        <input type="number" class="input-box" min="1" value="20" id="limitMessagesGrp" />
+      </div>
+
+      <div class="form-section">
+        <div class="form-check" style="background-color: #faf7f2; border: 1px dashed #cbb7a0;">
+          <input class="checkbox" type="checkbox" id="sendStickersGrp" checked />
+          <label class="form-check-label" for="sendStickersGrp">
+            🎨 Enviar emojis aleatórios no WhatsApp
+          </label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label">Entrada de mensagens</label>
+        <select id="msgSelectGrp" class="input-box" onchange="updateExtraOption('group')">
+          <option value="file" selected>📁 Arquivo de texto</option>
+          <option value="openai">🤖 By OpenAI</option>
+        </select>
+        
+        <div style="margin-top: 15px;">
+          <button class="btn-file" id="btnFileGroup" onclick="selectFile('group')">📁 Selecionar arquivo</button>
+          <span class="file-name" id="fileNameGroup"></span>
+          <input type="text" class="input-box" id="apiTokenGroup" placeholder="🔑 Insira seu token da OpenAI (sk-...)" style="display: none;" />
+        </div>
       </div>
     </div>
 
-    <div class="form-section">
-      <label class="form-label fw-bold" style="color: #5e3d2e;">
-        Limite de mensagens
-      </label>
-      <input
-        type="number"
-        min="1"
-        value="50"
-        id="limitMessages"
-        class="form-control"
-      />
-    </div>
-
-    <!-- Novo input adicionado aqui -->
-    <div class="form-section">
-      <label class="form-label fw-bold" style="color: #5e3d2e;">
-        Trocar de conta após (mensagens)
-      </label>
-      <input
-        type="number"
-        min="1"
-        value="100"
-        id="switchAccountAfter"
-        class="form-control"
-      />
-    </div>
-
-    <div class="form-section">
-      <label class="form-label fw-bold" style="color: #5e3d2e;">
-        Entrada de mensagens
-      </label>
-      <select id="msgSelect" class="form-select">
-        <option value="file" selected>📁 Arquivo de texto</option>
-        <option value="openai">🤖 By OpenAI</option>
-      </select>
-
-      <div id="extraOption"></div>
-      <input type="text" id="apiToken" placeholder="🔑 Insira seu token da OpenAI" />
-    </div>
-
-    <button class="save-btn" id="saveBtn">💾 Salvar preferências</button>
+    <!-- BOTÃO ÚNICO DE SALVAR PARA AS DUAS ABAS -->
+    <button class="save-btn" id="saveBtn">💾 Salvar configurações</button>
   </main>
 
 <script>
+  // LÓGICA DAS ABAS ATUALIZADA
+  function openTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
 
-  // Variáveis globais usadas em updateExtraOption
-
-  let select, extraDiv, apiTokenInput;
-  let savedToken = "", savedFilePath = "";
-
-  // Função global — agora sempre existe antes de qualquer uso
-  
-  function updateExtraOption() {
-    if (!select || !extraDiv || !apiTokenInput) return;
-    const value = select.value;
-    extraDiv.innerHTML = "";
-
-    if (value === "file") {
-      apiTokenInput.style.display = "none";
-      extraDiv.innerHTML = `
-        <button class="btn-file" id="fileButton">📁 Selecionar arquivo</button>
-        <span id="fileName"></span>
-      `;
-
-      const fileButton = document.getElementById("fileButton");
-      const fileName = document.getElementById("fileName");
-
-      // Exibe nome do arquivo salvo, se existir
-
-      if (savedFilePath) {
-        fileName.textContent = "Arquivo selecionado: " + savedFilePath;
-      }
-
-      fileButton.addEventListener("click", async () => {
-        try {
-          const path = await window.controller.select_file();
-          if (path) {
-            savedFilePath = path;
-            fileName.textContent = "Arquivo selecionado: " + path;
-          }
-        } catch (e) {
-          console.error("Erro ao selecionar arquivo:", e);
-        }
-      });
-    } else if (value === "openai") {
-      apiTokenInput.style.display = "block";
-      apiTokenInput.value = savedToken || "";
+    // Se abrir a aba de grupos, solicita a varredura imediata ao Python
+    if (tabId === 'tab-groups' && window.controller) {
+      document.getElementById("chipsGroupsContainer").innerHTML = `
+        <div style="text-align: center; color: #8b4513; font-style: italic; padding: 10px;">
+          Buscando chips conectados e mapeando grupos...
+        </div>`;
+      window.controller.trigger_group_fetch();
     }
   }
 
-  // Agora criamos o canal
+  // LÓGICA DE INTERFACE E INTEGRAÇÃO PYQT
+  let savedFilePathPrivate = "";
+  let savedFilePathGroup = "";
+
+  function updateExtraOption(type) {
+    const isPrivate = (type === 'private');
+    const selectVal = document.getElementById(isPrivate ? 'msgSelect' : 'msgSelectGrp').value;
+    const btnFile = document.getElementById(isPrivate ? 'btnFilePrivate' : 'btnFileGroup');
+    const fileName = document.getElementById(isPrivate ? 'fileNamePrivate' : 'fileNameGroup');
+    const apiToken = document.getElementById(isPrivate ? 'apiTokenPrivate' : 'apiTokenGroup');
+
+    if (selectVal === "file") {
+      apiToken.style.display = "none";
+      btnFile.style.display = "inline-flex";
+      if (isPrivate ? savedFilePathPrivate : savedFilePathGroup) {
+        fileName.style.display = "block";
+      }
+    } else {
+      btnFile.style.display = "none";
+      fileName.style.display = "none";
+      apiToken.style.display = "block";
+    }
+  }
+
+  async function selectFile(type) {
+    if (!window.controller) return;
+    try {
+      const path = await window.controller.select_file();
+      if (path) {
+        const isPrivate = (type === 'private');
+        if (isPrivate) {
+            savedFilePathPrivate = path;
+        } else {
+            savedFilePathGroup = path;
+        }
+        
+        const fileNameEl = document.getElementById(isPrivate ? 'fileNamePrivate' : 'fileNameGroup');
+        fileNameEl.style.display = 'block';
+        fileNameEl.textContent = "Arquivo selecionado: " + path;
+      }
+    } catch (e) {
+      console.error("Erro ao selecionar arquivo:", e);
+    }
+  }
 
   new QWebChannel(qt.webChannelTransport, function (channel) {
     window.controller = channel.objects.controller;
-    select = document.getElementById("msgSelect");
-    extraDiv = document.getElementById("extraOption");
-    apiTokenInput = document.getElementById("apiToken");
-
-    select.addEventListener("change", updateExtraOption);
+    
+    // Inicia os selects corretamente
+    updateExtraOption('private');
+    updateExtraOption('group');
   });
-
-  // Carrega script adicional no final
 
   const script = document.createElement("script");
   script.src = "assets/js/settings.js";

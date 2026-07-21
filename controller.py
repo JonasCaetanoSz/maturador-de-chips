@@ -1,18 +1,11 @@
-
 from PyQt6.QtWidgets import QMessageBox, QSystemTrayIcon, QFileDialog
-
-from PyQt6.QtCore import pyqtSlot, QObject
-
-from tkinter import filedialog
-
-from PyQt6.QtGui import QIcon
-
+from PyQt6.QtCore import pyqtSlot, QObject, QUrl
+from PyQt6.QtGui import QIcon, QDesktopServices
 from threading import Thread
-
 from typing import Optional
-
 import shutil
 import json
+import random
 import os
 
 class Controller(QObject):
@@ -56,7 +49,6 @@ class Controller(QObject):
                             shutil.rmtree(session_path)
                     except Exception as e:
                         print(f"[Controller] erro ao remover sessão '{session_path}': {e}")
-                    # remove sempre, mesmo se não existia mais
                     try:
                         json_content["deleteLaster"].remove(session_path)
                     except ValueError:
@@ -69,8 +61,29 @@ class Controller(QObject):
             print(f"[Controller] erro ao limpar delete.json: {e}")
 
     def setHomePage(self, home):
-        """Definir instancia da janela principal (Home)."""
+        """Definir instancia da janela principal (Home) e criar ponte de escuta para a status_view."""
         self.home = home
+        
+        # Cria um gancho nativo para escutar comandos da status_view sem depender de QWebChannel nela
+        if hasattr(self.home, "status_view") and self.home.status_view:
+            try:
+                self.home.status_view.titleChanged.connect(self._handle_status_signals)
+            except Exception as e:
+                print(f"[Controller] Erro ao conectar ponte de sinal com status_view: {e}")
+
+    def _handle_status_signals(self, title: str):
+        """Intercepta mudanças de título na status_view funcionando como barramento JS -> Python"""
+        if title == "cmd:stop_maturation":
+            self.ask_stop_maturation()
+            # Restaura o título padrão para limpar a fila de eventos
+            if self.home and hasattr(self.home, "status_view") and self.home.status_view:
+                self.home.status_view.page().runJavaScript("document.title = 'Status Maturação';")
+                
+        elif title.startswith("cmd:open_url:"):
+            url = title.replace("cmd:open_url:", "")
+            self.open_external_url(url)
+            if self.home and hasattr(self.home, "status_view") and self.home.status_view:
+                self.home.status_view.page().runJavaScript("document.title = 'Status Maturação';")
     
     def setMaturationRunning(self, running):
         """Definir o status do maturador"""
@@ -94,7 +107,6 @@ class Controller(QObject):
         """Fechar preferencias"""
         self.home.close_preferences()
 
-
     @pyqtSlot(result=str)
     def get_user_configs(self) -> str:
         try:
@@ -104,7 +116,6 @@ class Controller(QObject):
         except:
             return "{}"
 
-
     @pyqtSlot(str)
     def update_user_configs(self, new_configs: str):
         try:
@@ -113,7 +124,9 @@ class Controller(QObject):
             json_data = {}
 
         existing_path = self.messages_base.get("path", "")
+        
         json_data["selectedFilePath"] = json_data.get("selectedFilePath") or existing_path
+        json_data["SelectedFilePathGrp"] = json_data.get("SelectedFilePathGrp") or existing_path or json_data.get("selectedFilePath")
 
         try:
             with open("preferences.json", "w", encoding="utf-8") as f:
@@ -121,11 +134,8 @@ class Controller(QObject):
         except Exception as e:
             print("Erro ao gravar preferences.json:", e)
 
-        # Atualiza webviews
         for key, wv in self.home.webviews.items():
             wv["webview"].apply_preferences_sound()
-
-
 
     @pyqtSlot(str, str)
     def show_alert(self, title: str, message: str):
@@ -135,7 +145,6 @@ class Controller(QObject):
             QMessageBox.about(parent, title, message)
         except Exception as e:
             print(f"[Controller] erro ao mostrar alert: {e}")
-
 
     @pyqtSlot(result=str)
     def select_file(self) -> Optional[str]:
@@ -155,10 +164,10 @@ class Controller(QObject):
                 with open(file_path, mode="r", encoding="utf-8") as f:
                     content = f.read()
                     if not content:
-                        self.show_alert("Maturador de chips", "O arquivo selecionado não pode estar vazio!")
+                        self.show_alert("Maturador di chips", "O arquivo selecionado não pode estar vazio!")
                         return None
             except Exception as e:
-                self.show_alert("Maturador de chips", f"Erro ao abrir arquivo: {e}")
+                self.show_alert("Maturador di chips", f"Erro ao abrir arquivo: {e}")
                 return None
 
             self.messages_base["filename"] = os.path.basename(file_path)
@@ -169,7 +178,6 @@ class Controller(QObject):
         except Exception as e:
             print(f"[Controller] erro em select_file: {e}")
             return None
-
 
     @pyqtSlot(str)
     def change_current_webview(self, name: str):
@@ -219,11 +227,12 @@ class Controller(QObject):
 
     @pyqtSlot()
     def ask_stop_maturation(self):
+        """Slot seguro para interromper com segurança qualquer maturação ativa."""
         try:
             button = QMessageBox.question(
                 self.home,
                 "Maturador de chips",
-                "você tem certeza que quer parar o maturador?",
+                "Você tem certeza que quer parar o maturador?",
                 QMessageBox.StandardButton.Apply,
                 QMessageBox.StandardButton.Abort
             )
@@ -232,9 +241,13 @@ class Controller(QObject):
                 return
             
             self.signals.stop_maturation.emit()
-
         except Exception as e:
-            print("Erro mostrar opção de parar maturador...")
+            print("Erro ao mostrar opção de parar maturador:", e)
+
+    @pyqtSlot(str)
+    def open_external_url(self, url: str):
+        """Slot seguro para abrir links externos no navegador padrão do sistema."""
+        QDesktopServices.openUrl(QUrl(url))
 
     def setSessionTobeDelete(self, session_path: str):
         """Adicionar sessão ao arquivo delete.json para remoção no próximo start."""
@@ -278,7 +291,6 @@ class Controller(QObject):
                 if(numberEl) numberEl.textContent = "{session_name} (Conectado)";
                 if(iconEl) iconEl.src = "{photo}";
             }})();
-
             """
             try:
                 if self.home.sidebar and self.home.sidebar.page():
@@ -306,7 +318,6 @@ class Controller(QObject):
                 if(numberEl) numberEl.textContent = "{session_name} (Desconectado)";
                 if(iconEl) iconEl.src = "assets/medias/contact.jpg";
             }})();
-
             """
             try:
                 if self.home.sidebar and self.home.sidebar.page():
@@ -316,9 +327,8 @@ class Controller(QObject):
 
             if self.maturation_running:
                 self.check_maturation_continue_on_block(sessionName=session_name)
-
         except Exception as e:
-            print(f"[Controller] erro em accountDisconnected: {e}")
+            print(f"[Controller] erro ao verificar continuidade do maturador: {e}")
 
     def notify(self, title: str, message: str):
         """Mostrar notificação via bandeja."""
@@ -327,15 +337,18 @@ class Controller(QObject):
         except Exception as e:
             print(f"[Controller] erro em notify: {e}")
 
-    def inject_message_row(self, data:dict):
-        js_code = f""" 
-        window.addMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])}); 
-        """
-        self.home.status_view.page().runJavaScript(js_code)
+    @pyqtSlot(dict)
+    def inject_message_row(self, data: dict):
+        """Slot seguro para injetar a linha de histórico na UI"""
+        try:
+            js_code = f""" 
+            window.addMessageRow({json.dumps(data["sender"])}, {json.dumps(data["receiver"])}, {json.dumps(data["message"])}, {json.dumps(data["time"])}); 
+            """
+            self.home.status_view.page().runJavaScript(js_code)
+        except Exception as e:
+            print(f"[Controller] erro ao injetar linha de histórico: {e}")
 
-    def check_maturation_continue_on_block(self, sessionName:str):
-        """Checar as configurações para parar ou continuar a maturação quando uma conta é bloqueada/desconectada"""
-
+    def check_maturation_continue_on_block(self, sessionName: str):
         connected_keys = [key for key, webview in self.home.webviews.items() if webview.get("connected", False)]
         preferences = json.load(open("preferences.json", "r", encoding="utf8"))
 
@@ -345,7 +358,7 @@ class Controller(QObject):
             return True
 
         if len(connected_keys) <= 1:
-            self.notify("Maturador de chips",f"{sessionName} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. Parando maturação!")
+            self.notify("Maturador de chips", f"{sessionName} foi desconectado ou banido e agora o número de contas conectadas é insuficiente para continuar. Parando maturação!")
             self.signals.stop_maturation.emit()
             return True
 
@@ -354,24 +367,188 @@ class Controller(QObject):
             return False
     
     def stop_maturation(self, whatsapp):
-        Thread(target=whatsapp.stop() if whatsapp else None, daemon=True).start()
+        if whatsapp:
+            Thread(target=whatsapp.stop, daemon=True).start()
         self.setMaturationRunning(False)
-        self.home.close_status()
         self.restoreMenu()
     
     def send_whatsapp_text_message(self, sender_key, final_message, receiver_phone):
-        js_code = f"""
-        (async () => {{
-            const user = await window.WTools.GetUser("{receiver_phone}");       
-            const chat = await user.getChat();
-            await chat.sendMessage("{final_message}");
-        }})();
-        """
-        sender_webview = self.home.webviews[sender_key]["webview"]
-        sender_webview.page().runJavaScript(js_code)
+        """Versão com normalização de número JID e proteção de Promises do JS"""
+        try:
+            if not sender_key or not final_message or not receiver_phone:
+                return
+
+            js_code = """
+            (async () => {
+                try {
+                    let phoneStr = "@RECEIVER_PHONE@";
+                    
+                    if (!phoneStr.includes("@c.us") && !phoneStr.includes("@g.us")) {
+                        phoneStr = phoneStr + "@c.us";
+                    }
+                    
+                    const user = await window.WTools.GetUser(phoneStr);
+                    if (!user) return; 
+                    
+                    const chat = await user.getChat();
+                    if (!chat) return;
+                    
+                    if (chat.sendStateTyping) {
+                        await chat.sendStateTyping();
+                        await new Promise(r => setTimeout(r, @TYPING_DELAY@));
+                    }
+                    
+                    await chat.sendMessage(@FINAL_MESSAGE@);
+                } catch (err) {
+                    console.error("Erro interno no envio JS:", err);
+                }
+            })();
+            """
+            
+            js_code = js_code.replace("@RECEIVER_PHONE@", str(receiver_phone))
+            js_code = js_code.replace("@TYPING_DELAY@", str(random.randint(1500, 3500)))
+            js_code = js_code.replace("@FINAL_MESSAGE@", json.dumps(final_message))
+
+            sender_webview = self.home.webviews[sender_key]["webview"]
+            sender_webview.page().runJavaScript(js_code)
+        except Exception as e:
+            print(f"[Controller] erro ao disparar mensagem via JS: {e}")
+
+    @pyqtSlot()
+    def trigger_group_fetch(self):
+        """Varre os chips ativos extraindo os grupos diretamente do módulo WAWebChatCollection mapeado no console"""
+        if not self.home or not hasattr(self.home, "webviews"):
+            return
+
+        for name, obj in self.home.webviews.items():
+            if obj.get("connected", False):
+                webview = obj["webview"]
+                
+                js_extract_groups = """
+                (() => {
+                    try {
+                        const module = window.require("WAWebChatCollection");
+                        if (!module || !module.ChatCollection) return [];
+                        
+                        const collection = module.ChatCollection;
+                        
+                        const extractArray = (obj) => {
+                            if (!obj) return [];
+                            if (Array.isArray(obj)) return obj;
+                            if (typeof obj.getModelsArray === 'function') return obj.getModelsArray();
+                            if (obj._models && Array.isArray(obj._models)) return obj._models;
+                            if (obj.models && Array.isArray(obj.models)) return obj.models;
+                            return Object.values(obj);
+                        };
+
+                        const allItems = extractArray(collection);
+                        let groupsMap = [];
+                        
+                        for (let c of allItems) {
+                            if (!c || !c.id) continue;
+                            const serialized = typeof c.id === 'string' ? c.id : (c.id._serialized || '');
+                            
+                            if (serialized.includes('@g.us')) {
+                                groupsMap.push({
+                                    id: serialized,
+                                    name: c.name || c.formattedTitle || "Grupo sem nome"
+                                });
+                            }
+                        }
+                        return groupsMap;
+                    } catch (e) {
+                        return [];
+                    }
+                })();
+                """
+                
+                def create_callback(chip_name=name):
+                    def callback(result):
+                        groups = result if isinstance(result, list) else []
+                        js_inject = f"if(window.receiveChipGroups){{ window.receiveChipGroups('{chip_name}', {json.dumps(groups)}); }}"
+                        if self.home.settings_view and self.home.settings_view.page():
+                            self.home.settings_view.page().runJavaScript(js_inject)
+                    return callback
+
+                try:
+                    webview.page().runJavaScript(js_extract_groups, create_callback(name))
+                except Exception as e:
+                    print(f"Erro ao ler grupos do chip {name}: {e}")
+
+    @pyqtSlot(dict)
+    def send_whatsapp_group_message(self, data: dict):
+        """Dispara mensagens ou um emoji aleatório contornando a falha nos pacotes di figurinhas nativas"""
+        try:
+            target_group = data.get("target_group")
+            sender_key = data.get("sender_key")
+            message = data.get("message")
+            is_sticker = data.get("is_sticker", False)
+
+            if not sender_key or not target_group:
+                return
+
+            js_code = """
+            (async () => {
+                try {
+                    const selfUser = await window.WTools.GetUser(window.WTools.myWid._serialized);
+                    const selfChat = await selfUser.getChat();
+                    if (!selfChat || !selfChat.constructor) {
+                        console.error("Maturador: Construtor operacional da classe Chat não foi encontrado.");
+                        return;
+                    }
+                    const ChatClass = selfChat.constructor;
+
+                    let rawChatModel = null;
+                    try {
+                        const module = window.require("WAWebChatCollection");
+                        if (module && module.ChatCollection) {
+                            rawChatModel = module.ChatCollection.get("@TARGET_GROUP@");
+                        }
+                    } catch(e) {}
+
+                    if (!rawChatModel) {
+                        const groupWid = window.require("WAWebWidFactory").createWid("@TARGET_GROUP@");
+                        const res = await window.require("WAWebFindChatAction").findOrCreateLatestChat(groupWid, { getAsModel: false });
+                        rawChatModel = res.chat;
+                    }
+
+                    if (!rawChatModel) {
+                        console.error("Maturador: Modelo estrutural do grupo não foi encontrado na memória.");
+                        return;
+                    }
+
+                    const groupWidObj = window.require("WAWebWidFactory").createWid("@TARGET_GROUP@");
+                    const operationalGroupChat = new ChatClass(rawChatModel, groupWidObj);
+
+                    if (operationalGroupChat.sendStateTyping) {
+                        await operationalGroupChat.sendStateTyping();
+                        await new Promise(r => setTimeout(r, @TYPING_DELAY@));
+                    }
+
+                    if (@IS_STICKER@) {
+                        const emojis = ['👍', '🙏', '👏', '😂', '🔥', '🙌', '🚀', '😎', '💪', '🎯', '✌️', '👌', '❤️', '🤣', '👀', '🍷', '✨', '☕'];
+                        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                        await operationalGroupChat.sendMessage(randomEmoji);
+                    } else {
+                        await operationalGroupChat.sendMessage(@FINAL_MESSAGE@);
+                    }
+                } catch (err) {
+                    console.error("Erro interno no envio de texto/emoji para o grupo:", err);
+                }
+            })();
+            """
+            
+            js_code = js_code.replace("@TARGET_GROUP@", str(target_group))
+            js_code = js_code.replace("@IS_STICKER@", "true" if is_sticker else "false")
+            js_code = js_code.replace("@TYPING_DELAY@", str(random.randint(1000, 2000)) if is_sticker else str(random.randint(2000, 4500)))
+            js_code = js_code.replace("@FINAL_MESSAGE@", json.dumps(message) if message else "null")
+
+            sender_webview = self.home.webviews[sender_key]["webview"]
+            sender_webview.page().runJavaScript(js_code)
+        except Exception as e:
+            print(f"[Controller] erro ao disparar mensagem para o grupo via JS: {e}")
     
     def removeMenuOnStatusPage(self):
-        """Remove o menu enquanto a maturação está em andamento"""
         if self.home.stacked.currentIndex() == 2:
             self.home.options_menu.removeAction(self.home.remove_account_action)
             self.home.options_menu.removeAction(self.home.add_account_action)
@@ -379,7 +556,6 @@ class Controller(QObject):
             self.home.menubar.removeAction(self.home.action_start_maturation)
 
     def restoreMenu(self):
-        """Reativa o menu após fim da maturação"""
         self.home.options_menu.addAction(self.home.remove_account_action)
         self.home.options_menu.addAction(self.home.add_account_action)
         self.home.options_menu.addAction(self.home.config_action)

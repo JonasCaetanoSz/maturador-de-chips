@@ -1,4 +1,3 @@
-
 from PyQt6.QtWidgets import  QMainWindow, QWidget,  QHBoxLayout, QStackedWidget, QLabel, QVBoxLayout, QInputDialog, QMessageBox
 from PyQt6.QtWebEngineCore import  QWebEnginePage, QWebEngineProfile, QWebEngineSettings, QWebEngineUrlRequestInterceptor
 
@@ -169,7 +168,7 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
 class Home(QMainWindow):
     def __init__(self, controller: Controller):
         super().__init__()
-        self.setWindowTitle(f"Maturador de chips {controller.VERSION}")
+        self.setWindowTitle(f"Maturador PRO - 20.07.2026")
         self.setWindowIcon(QIcon("assets/medias/icon.ico"))
         self.setGeometry(100, 100, 1200, 700)
         self.controller = controller
@@ -186,11 +185,18 @@ class Home(QMainWindow):
         # Cria o menu
         self.menubar = self.menuBar()
         self.options_menu = self.menubar.addMenu("Opções")
-        # Ação solta na barra
-        self.action_start_maturation = QAction("Iniciar", self)
+        
+        # Ação solta na barra (Privado - mantendo o nome da variável para compatibilidade)
+        self.action_start_maturation = QAction("Iniciar Privado", self)
         # note: emitir diretamente no controller.signals
         self.action_start_maturation.triggered.connect(lambda: self.controller.signals.start_maturation.emit())
         self.menubar.addAction(self.action_start_maturation)
+
+        # Ação solta na barra (Grupos)
+        self.action_start_group = QAction("Iniciar Grupos", self)
+        self.action_start_group.triggered.connect(lambda: self.controller.signals.start_group_maturation.emit())
+        self.menubar.addAction(self.action_start_group)
+        
         # Ação de configurações
         self.config_action = QAction("Configurações", self)
         self.config_action.triggered.connect(self.open_preferences)
@@ -589,4 +595,3 @@ class Home(QMainWindow):
             super().closeEvent(event)
         except Exception:
             pass
-    

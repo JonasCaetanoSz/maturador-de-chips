@@ -227,22 +227,25 @@ class Controller(QObject):
 
     @pyqtSlot()
     def ask_stop_maturation(self):
-        """Slot seguro para interromper com segurança qualquer maturação ativa."""
+        """Safe slot to stop any active maturation process."""
         try:
-            button = QMessageBox.question(
-                self.home,
-                "Maturador de chips",
-                "Você tem certeza que quer parar o maturador?",
-                QMessageBox.StandardButton.Apply,
-                QMessageBox.StandardButton.Abort
-            )
+            message_box = QMessageBox(self.home)
+            message_box.setWindowTitle("Maturador de chips")
+            message_box.setText("Você tem certeza que quer parar o maturador?")
 
-            if button == QMessageBox.StandardButton.Abort:
+            yes_button = message_box.addButton("Sim", QMessageBox.ButtonRole.YesRole)
+            no_button = message_box.addButton("Não", QMessageBox.ButtonRole.NoRole)
+
+            message_box.setDefaultButton(no_button)
+            message_box.exec()
+
+            if message_box.clickedButton() == no_button:
                 return
-            
+
             self.signals.stop_maturation.emit()
-        except Exception as e:
-            print("Erro ao mostrar opção de parar maturador:", e)
+
+        except Exception as error:
+            print("Erro ao mostrar opção de parar maturador:", error)
 
     @pyqtSlot(str)
     def open_external_url(self, url: str):
@@ -369,6 +372,13 @@ class Controller(QObject):
     def stop_maturation(self, whatsapp):
         if whatsapp:
             Thread(target=whatsapp.stop, daemon=True).start()
+
+        if self.home.webviews:
+            webview_names = list(self.home.webviews.keys())
+            self.change_current_webview(webview_names[0])
+        else:
+            self.signals.change_current_stacked_index.emit(0)
+        
         self.setMaturationRunning(False)
         self.restoreMenu()
     

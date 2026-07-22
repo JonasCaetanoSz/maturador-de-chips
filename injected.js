@@ -518,51 +518,87 @@ class WhatsAppTools  {
   }
 }
 
-var WTools = new WhatsAppTools()
-
 window.sessionName = "@instanceName";
+
+window.WTools = new WhatsAppTools();
+
 
 // Enviar numero de telefone e foto para o programa
 
 function SendPhoneNumber(phone, eurl) {
-  const url = `/maturador/api/account-added?sessionName=${encodeURIComponent(window.sessionName)}&phone=${encodeURIComponent(phone)}&photo=${encodeURIComponent(eurl)}`;
-  xhr = new XMLHttpRequest()
-  xhr.open("GET", url, true)
-  xhr.send()
+    const url = `/maturador/api/account-added?sessionName=${encodeURIComponent(window.sessionName)}&phone=${encodeURIComponent(phone)}&photo=${encodeURIComponent(eurl)}`;
+
+    let xhr = new XMLHttpRequest();
+
+    xhr.open("GET", url, true);
+    xhr.send();
 }
 
-// Função que espera modulos ficarem prontos
+
+// Esperar os módulos do WhatsApp ficarem disponíveis
 
 function waitForModuleSystem() {
-    return new Promise(resolve => {
-        const test = () => {
-            try {
-                const mod = window.require("WAWebUserPrefsMeUser");
-                const myLid = window.require("WAWebUserPrefsMeUser").getMaybeMeLidUser()
 
-                if (mod  && myLid) {
-                    resolve();
-                    return;
+    return new Promise(resolve => {
+
+        const test = () => {
+
+            try {
+
+                if (!window.require) {
+                    throw new Error("Require ainda não disponível");
                 }
-            } catch {}
-            setTimeout(test, 50);
+
+                const userModule = window.require("WAWebUserPrefsMeUser");
+
+                if (
+                    userModule &&
+                    typeof userModule.getMaybeMeLidUser === "function"
+                ) {
+
+                    const myLid = userModule.getMaybeMeLidUser();
+
+                    if (myLid) {
+                        resolve(userModule);
+                        return;
+                    }
+                }
+
+            } catch (error) {
+                // WhatsApp ainda carregando módulos
+            }
+
+            setTimeout(test, 500);
         };
+
         test();
     });
 }
 
 
-// Aguardar os modulos ficarem disponiveis
+// Aguardar módulos ficarem disponíveis
 
 waitForModuleSystem().then(() => {
 
-    window.WTools = new WhatsAppTools()
-    window.WTools.onReady(async() => {
-    var me = await window.WTools.myProfileShortDetails();
-    let photo = (me.profilePic.eurl === undefined ) ? '' : me.profilePic.eurl;
-    SendPhoneNumber(me.phone, photo)
-})
+    window.WTools.onReady(async () => {
+
+        try {
+
+            const me = await window.WTools.myProfileShortDetails();
+
+            const photo = me.profilePic?.eurl ?? "";
+
+            SendPhoneNumber(me.phone, photo);
+
+        } catch (error) {
+
+            console.error(
+                "Erro ao obter dados do perfil:",
+                error
+            );
+        }
+
+    });
 
 });
-
 

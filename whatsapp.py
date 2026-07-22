@@ -22,12 +22,12 @@ class WhatsApp(QtCore.QThread):
         self.mode = mode
         connected_keys = self.get_connected_keys()
 
-        if len(connected_keys) < 1:
-            return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 1 conta conectada para iniciar.")
-        
         if self.mode == "private" and len(connected_keys) < 2:
             return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 2 contas conectadas para o modo privado.")
 
+        if self.mode == "group" and len(connected_keys) < 1:
+            return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 1 conta conectada para iniciar o modo grupos.")
+        
         with open("preferences.json", "r", encoding="utf8") as f:
             self.preferences = json.load(f)
 

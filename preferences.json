@@ -9,10 +9,12 @@
   "MessageType": "file",
   "ApiToken": "",
   "selectedFilePath": "C:/Users/jonas/OneDrive/Documentos/mensagens.txt",
-  "GroupMaturationTargets": {},
-  "MinIntervalGrp": 10,
-  "MaxIntervalGrp": 30,
-  "LimitMessagesGrp": 20,
+  "GroupMaturationTargets": {
+    "jonas": "120363429113015368@g.us"
+  },
+  "MinIntervalGrp": 5,
+  "MaxIntervalGrp": 10,
+  "LimitMessagesGrp": 3,
   "SendStickersGrp": true,
   "MessageTypeGrp": "file",
   "ApiTokenGrp": "",

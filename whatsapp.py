@@ -104,7 +104,6 @@ class WhatsApp(QtCore.QThread):
             return self.controller.signals.show_alert.emit("Maturador", "Nenhum chip possui grupo alvo configurado nas preferências.")
 
         sender_index = 0  # Início da lógica de rodízio sequencial
-
         for _ in range(limit):
             if self.isInterruptionRequested(): return
             

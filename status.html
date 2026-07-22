@@ -89,32 +89,6 @@
         .cancel-btn:hover {
             background-color: #c9302c;
         }
-
-        /* O mesmo botão de fechar das configurações */
-        .close-btn {
-            background-color: transparent;
-            border: 2px solid #cbb7a0;
-            color: #8b4513;
-            font-weight: bold;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            text-align: center;
-            line-height: 28px;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .close-btn:hover {
-            background-color: #8b4513;
-            border-color: #8b4513;
-            color: #fff;
-            transform: scale(1.1) rotate(90deg);
-        }
         
         .table-container {
             overflow-y: auto;
@@ -224,7 +198,6 @@
             <button class="cancel-btn" onclick="controller.ask_stop_maturation();">
                 🛑 Cancelar Maturação
             </button>
-            <button class="close-btn" onclick="fecharStatus()" title="Fechar histórico">×</button>
         </div>
     </div>
     
@@ -264,15 +237,6 @@
         row.scrollIntoView({ behavior: "smooth", block: "end" });
     };
 
-    function fecharStatus() {
-        // Tenta fechar via backend se estiver conectado
-        if (typeof backend !== 'undefined' && backend.close_status) {
-            backend.close_status();
-        } else {
-            // Fallback visual: apenas oculta o card
-            document.getElementById('historyCard').style.display = 'none';
-        }
-    }
 </script>
 </body>
 </html>

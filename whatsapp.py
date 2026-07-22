@@ -62,7 +62,7 @@ class WhatsApp(QtCore.QThread):
                 return self.controller.show_alert("Maturador de chips", f"Erro ao iniciar cliente OpenAI: {str(e)}")
 
         self.controller.setMaturationRunning(True)
-        self.controller.home.stacked.setCurrentIndex(2)
+        self.controller.signals.change_current_stacked_index.emit(2)
         self.controller.removeMenuOnStatusPage()
         super().start()
         return True

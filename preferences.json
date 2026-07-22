@@ -5,8 +5,16 @@
   "MinInterval": 53,
   "MaxInterval": 65,
   "LimitMessages": 10,
+  "switchAccountAfter": 1,
   "MessageType": "file",
   "ApiToken": "",
-  "selectedFilePath": "",
-  "switchAccountAfter": 1
+  "selectedFilePath": "C:/Users/jonas/OneDrive/Documentos/mensagens.txt",
+  "GroupMaturationTargets": {},
+  "MinIntervalGrp": 10,
+  "MaxIntervalGrp": 30,
+  "LimitMessagesGrp": 20,
+  "SendStickersGrp": true,
+  "MessageTypeGrp": "file",
+  "ApiTokenGrp": "",
+  "SelectedFilePathGrp": "C:/Users/jonas/OneDrive/Documentos/mensagens.txt"
 }

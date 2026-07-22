@@ -24,6 +24,8 @@ class SignalReceive(QtCore.QObject):
     send_whatsapp_text_message = QtCore.pyqtSignal(dict)
     # Enviar mensagem de texto e figurinha no whatsapp (Grupos)
     send_whatsapp_group_message = QtCore.pyqtSignal(dict)
+    # trocar para uma aba no stacked principal
+    change_current_stacked_index = QtCore.pyqtSignal(int)
 
 
 ripening: WhatsApp = None
@@ -58,6 +60,7 @@ controller.setHomePage(home=window)
 signals.close_preferences.connect(controller.close_preferences)
 signals.new_phone_number.connect(lambda data: controller.accountAuthenticated(data))
 signals.account_blocked.connect(lambda data: controller.accountDisconnected(data))
+signals.change_current_stacked_index.connect(lambda idx: window.stacked.setCurrentIndex(idx))
 
 # Conexões de Start/Stop da Maturação
 signals.start_maturation.connect(lambda: start_maturation(signals=signals, controller=controller))

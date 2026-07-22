@@ -50,8 +50,7 @@ def start_group_maturation_handler(signals, controller):
 
 app = QApplication(sys.argv)
 signals = SignalReceive()
-# A data já foi atualizada na sua fonte para 17.07.2026
-controller = Controller("17.07.2026", signals=signals)
+controller = Controller("20.07.2026", signals=signals)
 window = Home(controller=controller)
 # window.sidebar.page().loadStarted.connect(lambda: window.show)
 controller.setHomePage(home=window)

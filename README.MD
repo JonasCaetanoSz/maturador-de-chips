@@ -8,7 +8,7 @@ Maturador de chips é um pequeno programa para "esquentar" contas do WhatsApp e,
 
 ## Instalação
 
-Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v29.04.2026/MaturadorSetup29.04.2026.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
+Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v17.07.2026/MaturadorSetup17.07.2026.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
 
 - Clone o repositório
 
@@ -46,14 +46,16 @@ python main.py
 
 ## Funcionalidades
 
-- Definir intervalo mínimo e máximo entre mensagens
-- Definir troca de conta após X mensagens
-- Definir máximo de mensagens
-- Parar em caso de bloqueio
-- Mensagens com ChatGpt
-- Sem limite de instâncias
-- Escolher nome da instância
-- Remover instância
+- Maturação de chip por mensagens em grupos
+- Maturação de chip por mensagens privadas
+- Definir intervalo mínimo e máximo entre mensagens (modo privado e no modo grupos)
+- Definir troca de conta após X mensagens (modo privado)
+- Definir máximo de mensagens (modo privado)
+- Parar após X mensagens  (modo privado e modo grupos)
+- Parar em caso de bloqueio 
+- sem limite de instâncias
+- escolher nome instância 
+- remover instância
 
 ### Como gerar meu próprio executável?
 

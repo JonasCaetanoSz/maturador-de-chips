@@ -319,11 +319,11 @@ class Home(QMainWindow):
         def callback(webview_name):
             if webview_name and webview_name in self.webviews:
                 self.stacked.setCurrentWidget(self.webviews[webview_name]["webview"])
+                self.options_menu.addAction(self.remove_account_action)
             else:
                 self.stacked.setCurrentIndex(0)
 
         self.sidebar.page().runJavaScript(js, callback)
-        self.options_menu.addAction(self.remove_account_action)
 
     def close_status(self):
         js = """

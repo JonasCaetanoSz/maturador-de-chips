@@ -564,9 +564,11 @@ class Controller(QObject):
             self.home.options_menu.removeAction(self.home.add_account_action)
             self.home.options_menu.removeAction(self.home.config_action)
             self.home.menubar.removeAction(self.home.action_start_maturation)
+            self.home.menubar.removeAction(self.home.action_start_group)
 
     def restoreMenu(self):
-        self.home.options_menu.addAction(self.home.remove_account_action)
-        self.home.options_menu.addAction(self.home.add_account_action)
         self.home.options_menu.addAction(self.home.config_action)
+        self.home.options_menu.addAction(self.home.add_account_action)
+        self.home.options_menu.addAction(self.home.remove_account_action)
         self.home.menubar.addAction(self.home.action_start_maturation)
+        self.home.menubar.addAction(self.home.action_start_group)

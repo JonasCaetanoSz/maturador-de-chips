@@ -1,10 +1,10 @@
 {
-  "ShutdownAfterCompletion": false,
-  "PlaySound": true,
+  "ShutdownAfterCompletion": true,
+  "PlaySound": false,
   "ContinueIfDisconnected": true,
-  "MinInterval": 53,
-  "MaxInterval": 65,
-  "LimitMessages": 10,
+  "MinInterval": 10,
+  "MaxInterval": 15,
+  "LimitMessages": 4,
   "switchAccountAfter": 1,
   "MessageType": "file",
   "ApiToken": "",
@@ -12,9 +12,9 @@
   "GroupMaturationTargets": {
     "jonas": "120363429113015368@g.us"
   },
-  "MinIntervalGrp": 5,
-  "MaxIntervalGrp": 10,
-  "LimitMessagesGrp": 3,
+  "MinIntervalGrp": 10,
+  "MaxIntervalGrp": 30,
+  "LimitMessagesGrp": 20,
   "SendStickersGrp": true,
   "MessageTypeGrp": "file",
   "ApiTokenGrp": "",

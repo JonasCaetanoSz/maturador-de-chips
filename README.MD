@@ -52,9 +52,10 @@ python main.py
 - Definir troca de conta após X mensagens (modo privado)
 - Definir máximo de mensagens (modo privado)
 - Parar após X mensagens  (modo privado e modo grupos)
+- ignorar chip durante maturação (modo grupos)
 - Parar em caso de bloqueio 
 - sem limite de instâncias
-- escolher nome instância 
+- escolher nome instância
 - remover instância
 
 ### Como gerar meu próprio executável?

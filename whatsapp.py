@@ -23,10 +23,10 @@ class WhatsApp(QtCore.QThread):
         connected_keys = self.get_connected_keys()
 
         if self.mode == "private" and len(connected_keys) < 2:
-            return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 2 contas conectadas para o modo privado.")
+            return self.controller.signals.show_alert.emit("Maturador de chips", "É necessário pelo menos 2 contas conectadas para o modo privado.")
 
         if self.mode == "group" and len(connected_keys) < 1:
-            return self.controller.show_alert("Maturador de chips", "É necessário pelo menos 1 conta conectada para iniciar o modo grupos.")
+            return self.controller.signals.show_alert.emit("Maturador de chips", "É necessário pelo menos 1 conta conectada para iniciar o modo grupos.")
         
         with open("preferences.json", "r", encoding="utf8") as f:
             self.preferences = json.load(f)
@@ -42,24 +42,24 @@ class WhatsApp(QtCore.QThread):
 
         if msg_type == "file":
             if not file_path:
-                return self.controller.show_alert("Maturador de chips", "Nenhum arquivo de mensagens selecionado.")
+                return self.controller.signals.show_alert.emit("Maturador de chips", "Nenhum arquivo de mensagens selecionado.")
 
             if not os.path.exists(file_path):
-                return self.controller.show_alert("Maturador de chips", "Arquivo de mensagens não existe.")
+                return self.controller.signals.show_alert.emit("Maturador de chips", "Arquivo de mensagens não existe.")
 
             with open(file_path, mode="r", encoding="utf-8") as mf:
                 self.messages = mf.readlines()
 
             if not self.messages:
-                return self.controller.show_alert("Maturador de chips", "O arquivo de mensagens está vazio.")
+                return self.controller.signals.show_alert.emit("Maturador de chips", "O arquivo de mensagens está vazio.")
 
         if msg_type == "openai":
             if not api_token:
-                return self.controller.show_alert("Maturador de chips", "Token da OpenAI não informado na aba correspondente.")
+                return self.controller.signals.show_alert.emit("Maturador de chips", "Token da OpenAI não informado na aba correspondente.")
             try:
                 self.client = OpenAI(api_key=api_token, timeout=15.0)
             except Exception as e:
-                return self.controller.show_alert("Maturador de chips", f"Erro ao iniciar cliente OpenAI: {str(e)}")
+                return self.controller.signals.show_alert.emit("Maturador de chips", f"Erro ao iniciar cliente OpenAI: {str(e)}")
 
         self.controller.setMaturationRunning(True)
         self.controller.signals.change_current_stacked_index.emit(2)
@@ -101,7 +101,7 @@ class WhatsApp(QtCore.QThread):
         
         if not targets:
             self.controller.signals.stop_maturation.emit()
-            return self.controller.show_alert("Maturador", "Nenhum chip possui grupo alvo configurado nas preferências.")
+            return self.controller.signals.show_alert.emit("Maturador", "Nenhum chip possui grupo alvo configurado nas preferências.")
 
         sender_index = 0  # Início da lógica de rodízio sequencial
 

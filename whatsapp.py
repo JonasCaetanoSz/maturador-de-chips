@@ -28,8 +28,11 @@ class WhatsApp(QtCore.QThread):
         if self.mode == "group" and len(connected_keys) < 1:
             return self.controller.signals.show_alert.emit("Maturador de chips", "É necessário pelo menos 1 conta conectada para iniciar o modo grupos.")
         
-        with open("preferences.json", "r", encoding="utf8") as f:
-            self.preferences = json.load(f)
+        try:
+            with open("preferences.json", "r", encoding="utf8") as f:
+                self.preferences = json.load(f)
+        except Exception as e:
+            return self.controller.signals.show_alert.emit("Maturador de chips", f"Erro ao carregar preferências: {str(e)}")
 
         if self.mode == "private":
             msg_type = self.preferences.get("MessageType", "file")
@@ -48,7 +51,7 @@ class WhatsApp(QtCore.QThread):
                 return self.controller.signals.show_alert.emit("Maturador de chips", "Arquivo de mensagens não existe.")
 
             with open(file_path, mode="r", encoding="utf-8") as mf:
-                self.messages = mf.readlines()
+                self.messages = [line.strip() for line in mf if line.strip()]
 
             if not self.messages:
                 return self.controller.signals.show_alert.emit("Maturador de chips", "O arquivo de mensagens está vazio.")
@@ -74,10 +77,12 @@ class WhatsApp(QtCore.QThread):
         ]
 
     def safe_sleep(self, seconds: int) -> bool:
-        for _ in range(int(seconds * 10)):
+        # Checa a cada 200ms em vez de 100ms para poupar ciclos de CPU
+        steps = int(seconds * 5)
+        for _ in range(steps):
             if self.isInterruptionRequested():
                 return False
-            self.msleep(100)
+            self.msleep(200)
         return True
 
     def run(self) -> None:
@@ -103,35 +108,32 @@ class WhatsApp(QtCore.QThread):
             self.controller.signals.stop_maturation.emit()
             return self.controller.signals.show_alert.emit("Maturador", "Nenhum chip possui grupo alvo configurado nas preferências.")
 
-        sender_index = 0  # Início da lógica de rodízio sequencial
+        sender_index = 0
+        send_stickers = self.preferences.get("SendStickersGrp", True)
+        is_file_mode = self.preferences.get("MessageTypeGrp", "file") == "file"
+
         for _ in range(limit):
             if self.isInterruptionRequested(): return
             
             connected_keys = self.get_connected_keys()
-            
-            # Filtra apenas quem está conectado E possui grupo alvo configurado no arquivo JSON
             eligible_senders = [k for k in connected_keys if k in targets and targets[k]]
             
             if not eligible_senders:
                 if not self.safe_sleep(5): return
                 continue
             
-            # Pega o próximo chip da fila em rodízio, acabando com a aleatoriedade viciada
             sender_key = eligible_senders[sender_index % len(eligible_senders)]
             sender_index += 1
 
             target_group = targets[sender_key]
-            send_stickers = self.preferences.get("SendStickersGrp", True)
-            
-            # 30% de chance de disparar um Emoji rápido em vez de texto
             is_sticker = send_stickers and (random.random() < 0.30)
             final_message = None
 
             if is_sticker:
                 final_message = "[👍 Emoji Aleatório]"
             else:
-                if self.preferences.get("MessageTypeGrp", "file") == "file":
-                    final_message = random.choice(self.messages).strip()
+                if is_file_mode:
+                    final_message = random.choice(self.messages)
                 else:
                     messages = [{"role": "system", "content": "Crie uma mensagem muito curta, informal e natural para enviar em um grupo brasileiro no WhatsApp. Use gírias locais. Não use aspas."}]
                     final_message = self.generate_openai_message(messages)
@@ -163,6 +165,9 @@ class WhatsApp(QtCore.QThread):
         limit = int(self.preferences.get("LimitMessages", 1))
         min_delay = int(self.preferences.get("MinInterval", 1))
         max_delay = int(self.preferences.get("MaxInterval", 3))
+        switch_after = self.preferences.get("switchAccountAfter", 1)
+        is_file_mode = self.preferences.get("MessageType", "file") == "file"
+
         sender_count = 0
         sender_key = None
 
@@ -174,7 +179,7 @@ class WhatsApp(QtCore.QThread):
                 self.controller.signals.stop_maturation.emit()
                 return
             
-            if not sender_key or sender_count >= self.preferences.get("switchAccountAfter", 1):
+            if not sender_key or sender_count >= switch_after:
                 possible_senders = [k for k in connected_keys if k != sender_key]
                 sender_key = random.choice(possible_senders) if possible_senders else random.choice(connected_keys)
                 sender_count = 0
@@ -194,20 +199,30 @@ class WhatsApp(QtCore.QThread):
                     sender_count = 0
                     receiver_candidates = [k for k in connected_keys if k != sender_key]
 
+            if not receiver_candidates:
+                if not self.safe_sleep(2): return
+                continue
+
             receiver_key = random.choice(receiver_candidates)
             base_pair = tuple(sorted([sender_key, receiver_key]))
 
             if base_pair not in self.conversation_histories:
                 self.conversation_histories[base_pair] = []
+            
             history = self.conversation_histories[base_pair]
+
+            # OTIMIZAÇÃO DE MEMÓRIA: Limita o histórico das últimas 20 mensagens por par
+            if len(history) > 20:
+                history = history[-20:]
+                self.conversation_histories[base_pair] = history
 
             final_message = None
 
             if len(history) == 0:
-                final_message = self.messages[0].strip() if self.preferences.get("MessageType", "file") == "file" else "Olá, tudo bem?"
+                final_message = self.messages[0] if is_file_mode and self.messages else "Olá, tudo bem?"
             else:
-                if self.preferences.get("MessageType", "file") == "file":
-                    final_message = random.choice(self.messages).strip()
+                if is_file_mode:
+                    final_message = random.choice(self.messages)
                 else:
                     messages = self.build_messages_for_openai(history, responder_key=sender_key)
                     final_message = self.generate_openai_message(messages)

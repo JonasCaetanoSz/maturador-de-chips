@@ -8,7 +8,7 @@ Maturador de chips é um pequeno programa para "esquentar" contas do WhatsApp e,
 
 ## Instalação
 
-Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v17.07.2026/MaturadorSetup17.07.2026.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
+Se você é usuário Windows, pode <a href="https://github.com/JonasCaetanoSz/maturador-de-chips/releases/download/v30.07.2026/MaturadorSetup30.07.2026.exe"> fazer download do instalador x64</a>  ou siga as instruções abaixo para executar o código-fonte da versão de código aberto:
 
 - Clone o repositório
 

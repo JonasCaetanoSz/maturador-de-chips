@@ -56,7 +56,7 @@ def start_group_maturation_handler(signals, controller):
 # Instanciar o app e classes  
 app = QApplication(sys.argv)
 signals = SignalReceive()
-controller = Controller("20.07.2026", signals=signals)
+controller = Controller("30.07.2026", signals=signals)
 window = Home(controller=controller)
 controller.setHomePage(home=window)
 

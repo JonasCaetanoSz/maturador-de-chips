@@ -141,10 +141,10 @@ class RequestInterceptor(QWebEngineUrlRequestInterceptor):
 class Home(QMainWindow):
     def __init__(self, controller: Controller):
         super().__init__()
-        self.setWindowTitle(f"Maturador PRO - 20.07.2026")
         self.setWindowIcon(QIcon("assets/medias/icon.ico"))
         self.setGeometry(100, 100, 1200, 700)
         self.controller = controller
+        self.setWindowTitle(f"Maturador PRO - {self.controller.VERSION}")
         self.webviews = {}
 
         settings = QSettings("MaturadorChips", "MainWindow")
